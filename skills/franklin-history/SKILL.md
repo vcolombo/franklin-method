@@ -72,9 +72,12 @@ had never acquired.
 Four things, all extractable:
 
 **a. Placement calibration.** For every rung with a `placement` block: its `result` and
-sized `time_box` against the sessions actually spent (`acquire:` commits until `gate:
-<rung> passed`). Then the trait question — **does this person get systematically
-mis-placed, and in which direction?**
+sized `time_box` against the sessions actually spent — the rung's `placement:` commit
+plus its `acquire:` commits, up to `gate: <rung> passed`. **Count the `placement:`
+commit**; the box includes that session, and leaving it out reads as a one-session
+overrun on every rung in every campaign, which is the sort of constant bias this
+analysis exists to find and would instead invent. Then the trait question — **does
+this person get systematically mis-placed, and in which direction?**
 
 - Boxes routinely overrun → placement reads them as further along than they are, and
   the quizzes are letting items pass they shouldn't.

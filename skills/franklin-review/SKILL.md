@@ -45,7 +45,10 @@ The reverse is worth naming too: drills grinding with no source in weeks usually
 ### 3b. Check placement against what actually happened
 
 Only where an acquisition block ran this week. Read the rung's `placement.result` and
-its `time_box`, then compare with the sessions it actually took to pass the gate.
+its `time_box`, then compare with the sessions it actually took to pass the gate —
+**counting the placement session, which the box includes.** Comparing a box that
+counts it against a session tally that doesn't manufactures an overrun on every rung,
+and the finding below then blames the quiz for an accounting error.
 
 - **Box overran** — placement read the user as further along than they were. Which
   items did the quiz let pass that it shouldn't have?

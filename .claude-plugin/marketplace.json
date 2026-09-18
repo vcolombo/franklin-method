@@ -6,14 +6,14 @@
     "url": "https://github.com/vcolombo"
   },
   "description": "The Franklin Method - self-teaching campaigns built on Benjamin Franklin's own learning practices.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "plugins": [
     {
       "name": "franklin-method",
       "source": "./",
       "displayName": "The Franklin Method",
       "description": "Design and run a 13-week self-teaching campaign for any subject. Acquisition gates, reconstruct-and-diff drills, a fault grid, and cross-campaign analysis - with every answer key external to the model.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": {
         "name": "Vincent Colombo"
       },
