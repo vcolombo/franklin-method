@@ -206,7 +206,7 @@ And the failure modes, which he documented as honestly as the successes: he neve
 
 ## Known gaps
 
-- **`franklin-history` predates the `campaign.yml` and acquisition-gate changes.** It still works — it reads git logs — but it doesn't yet report on acquisition time or gates bypassed. Next thing to fix.
+- **Campaigns started before the placement changes have no `placement` blocks**, so `franklin-history`'s acquisition analysis reads those rungs as unmeasured rather than well-placed. It says so before drawing conclusions, but the calibration finding needs a campaign or two run under the new shape before it means anything.
 - **No campaign has completed a full cycle yet.** Everything here is designed rather than validated. The cycle review is built to revise itself from real fault data, and should be trusted over the original plan.
 - **Blind-tested on four subjects** (TDD, pottery, negotiation, FPGA), by running the skills in fresh contexts and grading the output. That catches design errors, not whether the method teaches anyone anything.
 
