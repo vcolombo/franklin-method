@@ -42,6 +42,22 @@ Count the week's sessions: artifact preps and rebuilds (`e`) against source prep
 
 The reverse is worth naming too: drills grinding with no source in weeks usually shows up as mechanically clean rebuilds that miss the point of the material.
 
+### 3b. Check placement against what actually happened
+
+Only where an acquisition block ran this week. Read the rung's `placement.result` and
+its `time_box`, then compare with the sessions it actually took to pass the gate.
+
+- **Box overran** — placement read the user as further along than they were. Which
+  items did the quiz let pass that it shouldn't have?
+- **Gate passed well inside the box** — placement underestimated them, and the cost
+  is boredom, which is how fourteen-week campaigns die.
+- **A `solid` result that later produced noisy diffs** — the quiz tested recall of
+  the material rather than the ability to *read an exemplar*, which is what the gate
+  is actually for. That is a quiz-design fault, not a learner fault.
+
+Name the miss and what the next rung's quiz should ask differently. Placement that is
+never checked against outcomes is a guess wearing a score.
+
 ### 4. Check the prediction hit rate
 
 If the campaign has a `PREDICTIONS.md`, count: hits, partials, blind misses, false alarms. Report the rate and the trend.
@@ -94,6 +110,20 @@ Per sub-skill: did the fault rate actually fall? A drill with a flat fault curve
 ### Which sources earned their time?
 
 Per source: did drilling it change anything downstream — a fault rate, a prediction hit rate, a diff that got sharper afterwards? A source that was pleasant and changed nothing is a source to drop. Be specific about which ones those were; "it was all useful" is the answer that keeps a bloated reading list alive for another cycle.
+
+### Did acquisition actually acquire?
+
+Per rung with a gate: read the session notes in `acquire/notes/`. Two questions,
+neither of them about effort.
+
+- **Could any note have been assembled from the source's table of contents?** If so
+  that session taught what exists rather than how it works, and the gate passed on
+  familiarity rather than understanding. Expect it to show up downstream as rebuilds
+  that reproduce shape without mechanism.
+- **Did the user actually use the non-text resources?** If every video went unwatched
+  across a whole cycle, stop shipping them and say so; if the videos did the work and
+  the prose didn't, invert the emphasis next cycle. Either finding is worth more than
+  continuing to offer both out of even-handedness.
 
 ### Check the answer keys held
 

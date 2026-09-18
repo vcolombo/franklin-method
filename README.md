@@ -29,14 +29,39 @@ The reconstruct-and-diff loop is **refinement only**. When Franklin ran it he al
 
 **Reconstructing material you have not acquired is reconstructing a Spectator essay in a language you cannot read.** So every rung of a campaign gets acquisition first, gated by an exit test, then drills. This distinction is enforced in the skills, not just documented here.
 
+### Acquisition is measured, not assumed
+
+A gate sized by guesswork fails in both directions: assume zero and an experienced
+user is bored out of a fourteen-week campaign; assume competence and a beginner is
+stranded in drills whose diff is noise. So acquisition runs in three phases.
+
+**Placement** happens per rung, immediately before that rung's block — a short quiz
+scored against a key written *before* the user answers. A `solid` result passes the
+gate on the spot and saves the sessions; `partial` narrows the material to the named
+gaps. Self-report sizes the calendar, never the gate.
+
+**Orientation** happens once, before rung 1: what the subject is, the separable
+mechanisms it buys, **the honest case against it**, and how the rungs map onto it. A
+learner who can execute the mechanics but cannot say what they are for drops the
+campaign around week 5, and is right to. Where a source exemplar argues for the
+subject, orientation deliberately does not paraphrase it — reconstructing it later
+requires recall, not recognition.
+
+**Acquisition sessions** teach mechanism rather than inventory, against one test:
+*if the session's output could have been assembled from the source's table of
+contents, it was not acquisition.* Each one writes a committed note, and each note
+carries verified external resources in **at least two modalities** — canonical text
+and a video with a timestamped segment — because people do not all learn by reading.
+Links are searched and checked to resolve when the block starts, never recalled.
+
 ---
 
 ## The four skills
 
 | Skill | Cadence | What it does |
 |---|---|---|
-| **`franklin`** | Once per subject | Interviews the goal, decomposes it into independently-failing sub-skills, assigns each a real answer key, builds an acquisition gate per rung, orders the ladder easiest-first, and writes a git repo |
-| **`franklin-drill`** | Daily, 20 min | Three modes: **acquire** (work the material, pass the exit test), **prep** (compress an exemplar to hints, set the cold delay), **rebuild** (hints only, blind reconstruction, then the diff) |
+| **`franklin`** | Once per subject | Interviews the goal, decomposes it into independently-failing sub-skills, assigns each a real answer key, writes an orientation block and a placement-sized acquisition gate per rung, orders the ladder easiest-first, and writes a git repo |
+| **`franklin-drill`** | Daily, 20 min | Three modes: **acquire** (place the learner, orient, work the material, pass the exit test), **prep** (compress an exemplar to hints, set the cold delay), **rebuild** (hints only, blind reconstruction, then the diff) |
 | **`franklin-review`** | Weekly + at cycle end | Tallies the fault grid, finds recurring losses, checks study-to-drill balance and prediction hit rate, revises the rows, and hands off to the next queued campaign |
 | **`franklin-history`** | After 2+ campaigns | Mines the git logs across every campaign for faults that recur across *unrelated* subjects — those are facts about the learner, not the subject |
 
@@ -69,8 +94,9 @@ They chain:
   campaign.yml       # status: active | queued | complete — how the skills know what's live
   README.md          # aim, ladder, the two modes, what "cold" forbids
   CURRICULUM.md      # per rung: acquisition gate, exit test, drill form, answer key
-  SCHEDULE.md        # weeks, acquisition blocks marked
-  GATES.md           # exit tests, and whether each has been passed
+  SCHEDULE.md        # weeks, orientation and acquisition blocks marked
+  GATES.md           # orientation, placement, material by modality, exit tests, passed dates
+  acquire/notes/     # one committed note per acquisition session, with resources
   FAULTS.md          # a 13-row grid, one dot per fault, one focus row per week
   PREDICTIONS.md     # the resolving-prediction log for the judgment rung
   exemplars/<id>/    # original.md, hints.md, meta.yml (cold_until lives here)
