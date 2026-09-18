@@ -117,11 +117,18 @@ From a real campaign — *"learn TDD, coming from barely testing at all."*
 
 ## Install
 
-These are Claude account skills. Copy each directory into wherever your Claude client reads skills from:
+This repo is both a plugin and its own marketplace, so it installs in two commands:
+
+```
+/plugin marketplace add vcolombo/franklin-method
+/plugin install franklin-method@franklin-method
+```
+
+Or copy the skills in by hand:
 
 ```bash
-git clone https://github.com/<you>/franklin-method.git
-cp -r franklin-method/skills/franklin*        ~/.claude/skills/
+git clone https://github.com/vcolombo/franklin-method.git
+cp -r franklin-method/skills/franklin* ~/.claude/skills/
 ```
 
 Then start a campaign:
@@ -132,7 +139,27 @@ Then start a campaign:
 
 The campaign repo defaults to `~/franklin/<subject>/`. Pick one home and stay there — two copies on two machines diverge, and the git log stops being trustworthy.
 
----
+### Repo layout
+
+```
+.claude-plugin/
+  plugin.json          # plugin manifest
+  marketplace.json     # marketplace manifest — source "./" (plugin is the repo root)
+skills/
+  franklin/SKILL.md
+  franklin-drill/SKILL.md
+  franklin-review/SKILL.md
+  franklin-history/SKILL.md
+```
+
+Validate before publishing a change:
+
+```bash
+claude plugin validate .
+```
+
+Note that `claude plugin validate` checks `plugin.json` but does **not** validate
+`marketplace.json` — a broken marketplace manifest fails at install time instead.
 
 ## Provenance
 

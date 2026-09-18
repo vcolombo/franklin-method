@@ -1,0 +1,20 @@
+{
+  "name": "franklin-method",
+  "version": "0.1.0",
+  "description": "Turns any subject into a self-teaching campaign using Benjamin Franklin's two modes: acquisition, then reconstruct-and-diff refinement. Every check is external - Claude never grades the work.",
+  "author": {
+    "name": "Vincent Colombo",
+    "url": "https://github.com/vcolombo"
+  },
+  "homepage": "https://github.com/vcolombo/franklin-method",
+  "repository": "https://github.com/vcolombo/franklin-method",
+  "license": "MIT",
+  "keywords": [
+    "learning",
+    "deliberate-practice",
+    "self-teaching",
+    "study",
+    "spaced-repetition",
+    "franklin"
+  ]
+}
