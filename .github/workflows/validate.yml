@@ -1,0 +1,53 @@
+name: validate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  manifests:
+    name: plugin and marketplace manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate manifests
+        # With a marketplace.json present this validates the marketplace and
+        # recurses into every plugin it lists, so both manifests are covered.
+        run: claude plugin validate . --strict
+
+      - name: Validate skills
+        run: claude plugin validate ./skills --strict
+
+      - name: Manifest versions agree
+        run: |
+          plugin=$(python3 -c 'import json;print(json.load(open(".claude-plugin/plugin.json"))["version"])')
+          market=$(python3 -c 'import json;print(json.load(open(".claude-plugin/marketplace.json"))["version"])')
+          listed=$(python3 -c 'import json;print(json.load(open(".claude-plugin/marketplace.json"))["plugins"][0]["version"])')
+          echo "plugin.json=$plugin marketplace.json=$market marketplace.plugins[0]=$listed"
+          test "$plugin" = "$market" && test "$plugin" = "$listed"
+
+  checker:
+    name: campaign checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Run the fixture suite
+        run: ./tests/run.sh

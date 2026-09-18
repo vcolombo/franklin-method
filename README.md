@@ -176,16 +176,63 @@ skills/
   franklin-drill/SKILL.md
   franklin-review/SKILL.md
   franklin-history/SKILL.md
+scripts/
+  check-campaign.py    # the campaign schema, as a script
+tests/
+  run.sh               # fixture suite for the checker
+  fixtures/{good,bad}/ # one campaign that follows the schema, one that breaks it
+.github/workflows/
+  validate.yml         # manifests + skills + the fixture suite, on every push
 ```
 
 Validate before publishing a change:
 
 ```bash
-claude plugin validate .
+claude plugin validate . --strict      # manifests
+claude plugin validate ./skills --strict
 ```
 
-Note that `claude plugin validate` checks `plugin.json` but does **not** validate
-`marketplace.json` — a broken marketplace manifest fails at install time instead.
+With a `marketplace.json` present, `claude plugin validate .` validates the
+marketplace manifest **and recurses into every plugin it lists**, so both manifests
+are covered by the one command — errors in `plugin.json` are reported as
+`plugins[0] plugin.json → …`. Point it at a directory with no marketplace manifest
+and it validates the plugin manifest alone. `--strict` promotes warnings (unknown
+fields, missing metadata) to failures, which is what CI runs.
+
+## Checking a campaign
+
+The rules above are prose, and prose gates get talked past — in one real session a
+rung's gate was passed on a self-reported "essentially none", which is precisely the
+input placement exists to refuse. So the schema is also a script:
+
+```bash
+scripts/check-campaign.py ~/franklin/tdd     # one campaign
+scripts/check-campaign.py --all              # everything in ~/franklin
+scripts/check-campaign.py --all --strict     # warnings count as failures
+scripts/check-campaign.py ~/franklin/tdd --json
+```
+
+It reads `campaign.yml`, `GATES.md` and every `exemplars/*/meta.yml`, and reports
+where the campaign has drifted from what `franklin-drill` expects to find. Exit 0
+clean, 1 findings, 2 couldn't run. Needs PyYAML.
+
+The findings it exists for:
+
+| Code | What it catches |
+|---|---|
+| `G016` | a gate marked passed while its placement is still `pending` — the self-report bypass |
+| `G014` | a `partial` or `solid` placement whose `evidence` names no missed items |
+| `G010` | a rung with no `placement` block at all — an older campaign, unmeasured rather than well-placed |
+| `G021` `G022` | one modality only, or a video with no timestamped segment |
+| `G024` `G025` | links never verified, or verified over 45 days ago |
+| `G017` | a `time_box` still a range after placement ran |
+| `M007` | a cold delay under four days |
+| `X002` | an exemplar prepped before its rung's gate opened |
+| `X003` `X004` | an exemplar that ripens — or has already ripened — while its gate is still shut, and is going stale where it sits |
+
+Run it before a Sunday review, and after any hand-edit of a campaign file. It is a
+schema check, not a judgement: it will not tell you whether the campaign is teaching
+you anything.
 
 ## Provenance
 

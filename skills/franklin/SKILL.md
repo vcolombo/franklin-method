@@ -182,6 +182,10 @@ So write into the rung's `GATES.md` block:
 and set `time_box` as a **range** — `"2–6 sessions, set by placement"` — rather than
 a fixed number. `franklin-drill` narrows it when placement runs.
 
+**The box includes the placement session.** Placement costs a real twenty minutes, so
+a rung boxed at three sessions buys one placement and two acquisition sessions. Size
+the ranges knowing that, or every rung silently runs a session over.
+
 The step-1 interview answer still matters: it sizes the *schedule* so the calendar is
 roughly right. It does not size the gate.
 
@@ -226,7 +230,7 @@ Two checks, both external, neither Claude's opinion:
 
 ### 4. The time box
 
-A number of sessions — **a range until placement narrows it**. Acquisition expands to fill whatever it is given; the exit test is what ends it, the box is what stops it quietly becoming the campaign.
+A number of sessions — **a range until placement narrows it**, and it counts the placement session itself. Acquisition expands to fill whatever it is given; the exit test is what ends it, the box is what stops it quietly becoming the campaign.
 
 ### Acquisition is not the source track
 

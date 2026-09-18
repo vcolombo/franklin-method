@@ -90,6 +90,14 @@ is noise. Both read to the user as the method being broken.
 4. **Record it** in `GATES.md`: `placement.status: done`, `run_on`, `result`,
    `evidence` naming the missed items in one line. Narrow `time_box` from its range
    to a number.
+
+   **This session counts against that number.** Placement is a session spent — a box
+   narrowed to three means two acquisition sessions remain, and the user should be
+   told which it is. A box that quietly excludes placement runs one session long on
+   every rung, and the overrun then gets misread as placement having mis-sized it.
+   (A `solid` result is the one case where the accounting barely matters: the session
+   is still spent, but the gate is passed and the rest of the box goes back to the
+   calendar.)
 5. **Commit:** `placement: <rung> — <result>`.
 
 A `solid` result is a real outcome, not a failure of the campaign design. Say so and
@@ -153,7 +161,7 @@ Set `covered: <today>`. **Commit:** `acquire: orientation`.
    **Search for these; never recall them.** Verify each link resolves before writing
    it down — a dead link destroys confidence in the whole plan — and update
    `material.verified_on`. Note anything paywalled, borrow-only, or account-gated.
-5. **Track sessions against the time box.** If the box is spent and the exit test isn't close, say so plainly: either the material is wrong for them, or the rung is too big. Both are findings. Do not silently extend. If placement said `zero` and the box was set for `partial`, that is a placement miss — record it, because the review looks for that pattern.
+5. **Track sessions against the time box**, counting the placement session as the first one against it. If the box is spent and the exit test isn't close, say so plainly: either the material is wrong for them, or the rung is too big. Both are findings. Do not silently extend. If placement said `zero` and the box was set for `partial`, that is a placement miss — record it, because the review looks for that pattern.
 6. **Run the exit test** once the material is covered:
    - **Explain it unaided.** They write the explanation from memory, sources closed. Claude checks it against the material and **names what is missing or wrong rather than grading it warmly.** Vague means not landed.
    - **Pass the exercises.** The source's own, or the substitute build task. **The result must run, compile, hold water, or otherwise be externally checkable.** If the only available check is Claude's opinion, the exit test is broken — say so and find a real one.
