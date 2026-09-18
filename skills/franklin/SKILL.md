@@ -1,6 +1,6 @@
 ---
 name: franklin
-description: "Start a Franklin-method learning campaign for any subject: interview the goal, decompose it into sub-skills with real answer keys, build an acquisition gate and drills for each rung, and init a git repo to track it. Use when the user says they want to learn something."
+description: "Start a Franklin-method learning campaign for any subject: interview the goal, decompose it into sub-skills with real answer keys, build an orientation block, a placement-sized acquisition gate and drills for each rung, and init a git repo to track it. Use when the user says they want to learn something."
 ---
 
 # Franklin — Start a Learning Campaign
@@ -20,7 +20,7 @@ That loop is **refinement only**. When Franklin ran it he already read English f
 
 **Reconstructing material you have not yet acquired is reconstructing a Spectator essay in a language you cannot read.** It produces frustration, a meaningless diff, and a user who reasonably concludes the method is broken.
 
-So every rung gets **acquisition first, gated by an exit test, then drills.** Acquisition is not optional, not supplementary, and not the same thing as the source track in step 8 — sources explain *why*, acquisition teaches *what*.
+So every rung gets **acquisition first, gated by an exit test, then drills.** Acquisition is not optional, not supplementary, and not the same thing as the source track in step 9 — sources explain *why*, acquisition teaches *what*.
 
 **Invocation:** `/franklin <subject>` — e.g. "/franklin I want to learn about underwater basket weaving"
 
@@ -55,7 +55,7 @@ Write into the queued README: **re-run `franklin-review` on the active campaign 
 Ask 3–5 questions in a **single batch**, then proceed. Do not drip-feed follow-ups.
 
 1. **Aim:** what does "I can do this" look like concretely? Push for an observable result — "weave a watertight coiled basket unassisted" not "understand basket weaving."
-2. **Current level:** what can they already do in this area, and what's the nearest adjacent skill they already have? **This answer sizes every acquisition gate in the campaign** — press for specifics rather than accepting "beginner."
+2. **Current level:** what can they already do in this area, and what's the nearest adjacent skill they already have? Press for evidence rather than accepting "beginner" or "intermediate" — what have they built, what error would they recognise on sight. **This sizes the schedule, not the gates.** Each rung's real starting point is measured by a placement quiz when that rung comes up (step 7); self-assessment is unreliable in both directions and is never the basis for skipping or padding a gate.
 3. **Budget:** minutes per day, and is there a deadline or event driving this?
 4. **Access:** what exemplars, materials, tools, courses, or people can they actually get at? (This constrains everything downstream.)
 5. **Only if genuinely unclear:** is the aim performance, understanding, or production? These need different drills.
@@ -108,27 +108,131 @@ Franklin argued against the Latin-first convention: start with French, then Ital
 
 Order the sub-skills so each one makes the next cheaper, starting from whatever is **tractable today with materials in hand** — not from whatever is most prestigious or most fundamental. Prestige-first curricula are the ones people quit.
 
-## Step 6 — Build the acquisition gate for every rung
+## Step 6 — Write the orientation block
+
+Before rung 1, and before any mechanics, the campaign answers one question: **what
+is this subject, and why does anyone do it this way?**
+
+This is not a gate and has no exit test. It is one session, and it exists because a
+curriculum built from step 2 onward is a ladder with no ground floor — it teaches
+the mechanics of a thing the learner cannot yet say the point of. A learner who can
+write a fixture but cannot say what test-first is *for* will drop the campaign around
+week 5 and will be right to.
+
+Write into `GATES.md` an ungated `orientation` block naming what the session must
+cover:
+
+1. **What the thing is** — the loop, the process, the form. Concretely, not by
+   analogy.
+2. **The mechanisms** — what it actually buys, enumerated and *separable*. "It
+   improves quality" is not a mechanism. "A test you have not watched fail has never
+   been verified to be wired to the behaviour" is.
+3. **The honest case against** — where the evidence is weak or mixed, what the
+   practice is bad at, what the live disagreements in the field are. A campaign that
+   opens with advocacy produces a learner who cannot tell a real objection from a
+   lazy one, and it forfeits the user's trust the first time they meet a credible
+   critic.
+4. **The rungs mapped onto the thing** — why rung 1 is first, and what each later
+   rung is for. This converts the schedule from an arbitrary list into a route.
+
+### The exemplar-contamination rule
+
+If the campaign's source track drills a text that argues for the subject — and it
+usually does, because that is what makes a good `r01` — then **orientation must not
+paraphrase that text's argument, its ordering, or the misreadings it names.**
+Reconstructing it later requires recall; reading a summary now converts that into
+recognition and quietly destroys the exemplar.
+
+Orient from the common ground of the field instead, and say in the note which text
+is being held back and why. Where the whole orientation would be that one text,
+either pick a different `r01` or accept that the campaign has no drilled source for
+that rung — both are honest; a spoiled exemplar is not.
+
+## Step 7 — Build the acquisition gate for every rung
 
 **This step comes before drill design, because a drill on unacquired material is not a drill.**
 
 For each rung ask: *can they already read the exemplar?* Not "could they write it" — could they look at a reference example of this sub-skill and understand what every part is doing and why? If no, the rung needs acquisition.
 
-For each rung that does, name three things:
+For each rung that does, name four things.
 
-**1. The material.** Tutorials, official docs, worked examples, a course, a demonstration video — whatever teaches the mechanics fastest. Reference docs are excellent here even though they are never drilled: acquisition and drilling want opposite media.
+### 1. Placement — do not size a gate from a guess
 
-**2. The exit test.** Two checks, both external, neither Claude's opinion:
+**Never assume a starting point, in either direction.** Assuming zero bores an
+experienced user out of a fourteen-week campaign; assuming competence strands a
+beginner in drills whose diff is noise. Both failures look like "the method doesn't
+work."
+
+Placement is **run per rung by `franklin-drill`, immediately before that rung's
+acquisition block** — not here, and not all at once at campaign creation. A guess
+made in week 1 about where the user will stand in week 10 is worthless: they will
+have spent nine weeks in the subject by then. What this step does is *declare that
+placement is required* and leave the box unsized until it runs.
+
+So write into the rung's `GATES.md` block:
+
+```yaml
+  placement:
+    status: pending        # pending | done
+    run_on: null           # YYYY-MM-DD, filled by franklin-drill
+    result: null           # zero | partial | solid — filled by franklin-drill
+    evidence: ""           # which quiz items were missed, in one line
+```
+
+and set `time_box` as a **range** — `"2–6 sessions, set by placement"` — rather than
+a fixed number. `franklin-drill` narrows it when placement runs.
+
+The step-1 interview answer still matters: it sizes the *schedule* so the calendar is
+roughly right. It does not size the gate.
+
+### 2. The material — at least two modalities, links verified
+
+Name the material, and name it as **specific resources with URLs**, never as a
+category. "Read the docs" is not material; a named page is.
+
+Every acquisition block offers **at least canonical text and a video**, because
+people do not all learn the same way and a campaign that ships only one modality
+silently fails the half of users who need the other:
+
+| Modality | Required? | What it must be |
+|---|---|---|
+| **Canonical text** | **Always** | The authoritative written reference — official docs, the spec, the primary source. Named pages, not a site root. |
+| **Video / talk / screencast** | **Always, where one exists** | A specific video with a **timestamped segment**, not a channel or a playlist. For anything with tacit motion — craft, hardware, tooling — this is the *primary* material, not a supplement. |
+| **Worked example or interactive** | Strongly preferred | A tutorial with exercises, a playground, a kata, a repo that runs. The *do it* modality, distinct from read-or-watch. |
+| **One deeper dive** | Optional, always flagged | A chapter, paper, or long talk marked **explicitly beyond the gate**, so the curious user has somewhere to go without inflating the time box. |
+
+Where no video exists for a rung, **say so in the block rather than omitting the row
+silently** — the absence is information, and it tells the user not to go looking.
+
+**Search; never recall.** The skill's rule for sources applies with full force to
+acquisition material: recommendations from memory go stale, and a dead link in week
+one destroys confidence in the whole plan. Search for each resource and **verify it
+resolves before writing it down.** Note plainly anything paywalled, borrow-only, or
+requiring an account.
+
+Links are gathered **per rung, when that rung's block starts**, by `franklin-drill` —
+for the same reason placement is: a link verified in week 1 for a week-11 rung may
+well be dead by week 11. At campaign creation, name one canonical text and one video
+per rung so the plan is legible, and mark the rest `to_verify`.
+
+Reference docs are excellent here even though they are never drilled: acquisition and drilling want opposite media.
+
+### 3. The exit test
+
+Two checks, both external, neither Claude's opinion:
+
 - **Explain it unaided.** Write the explanation from memory, no source open. Vague explanation means it hasn't landed.
 - **Pass the source's own exercises.** Most good acquisition material ships them. If it doesn't, substitute a small build-from-scratch task with a runnable or visible result.
 
-**3. The time box.** A number of sessions, stated up front. Acquisition expands to fill whatever it is given — the exit test is what ends it, the box is what stops it quietly becoming the campaign.
+### 4. The time box
+
+A number of sessions — **a range until placement narrows it**. Acquisition expands to fill whatever it is given; the exit test is what ends it, the box is what stops it quietly becoming the campaign.
 
 ### Acquisition is not the source track
 
 They differ in kind and both are needed:
 
-| | Acquisition | Sources (step 8) |
+| | Acquisition | Sources (step 9) |
 |---|---|---|
 | Teaches | **What** it is and how it works | **Why** it matters and when to use it |
 | Example | pytest docs, a fixtures tutorial | Beck's *Canon TDD* |
@@ -142,9 +246,9 @@ Sometimes a rung's material is genuinely new *and* the user has no adjacent skil
 
 ### When acquisition is unnecessary
 
-If they already have the material — a rusty expert, an adjacent skill that transfers — say so and skip the gate. Do not manufacture a gate to look thorough. Their step-1 answer decides this per rung, not globally.
+A rung can turn out not to need its gate — a rusty expert, an adjacent skill that transfers. **That is placement's call to make, not the interview's.** Write the gate as `needed: true` with placement pending; if placement comes back `solid`, `franklin-drill` marks the gate passed on the spot with the evidence recorded, and the block converts to drills. Do not pre-emptively skip a gate on a self-report, and do not manufacture one to look thorough.
 
-## Step 7 — Assign a drill form to each sub-skill
+## Step 8 — Assign a drill form to each sub-skill
 
 These run **after** that rung's gate is passed. Three canonical forms; pick and adapt per sub-skill, and name the adaptation in the curriculum.
 
@@ -159,7 +263,7 @@ These run **after** that rung's gate is passed. Three canonical forms; pick and 
 **C. Scramble** (his structure drill). Shuffle your own hints into disorder, come back weeks later, re-sequence them cold, then compare your ordering to the original's.
 - Works anywhere sequence matters: argument, process, assembly order, runbook steps.
 
-## Step 8 — Build the source track
+## Step 9 — Build the source track
 
 Franklin read enormously and drilled on top of it. The drills were never the whole education.
 
@@ -201,13 +305,13 @@ Consuming feels like progress and costs nothing. A campaign where every source i
 
 **Cap sources at roughly one session in three.** Acquisition is exempt from that ratio — it is bounded by its exit test and time box instead — but it *is* bounded, and the review checks both.
 
-## Step 9 — Find the Junto
+## Step 10 — Find the Junto
 
 Franklin's club had enforced rules: an original essay from each member every quarter, debate *"in the sincere spirit of inquiry after truth, without fondness for dispute or desire of victory,"* and a **cash fine** for expressing positiveness or flatly contradicting someone.
 
 Identify one real venue — a person, a group, a forum, a subreddit, a Discord — where the user will present work and take criticism. Schedule one presentation at week 12. If they truly have no venue, say so plainly and substitute a public post; do not pretend a private journal is a Junto.
 
-## Step 10 — Seed the pipeline
+## Step 11 — Seed the pipeline
 
 Once rung 1's gate is passed, several exemplars stay in flight at once so a ripe one is always waiting. A campaign seeded with a single exemplar strands the user for four days with nothing to do.
 
@@ -227,7 +331,7 @@ Write into the generated `README.md`, in the user's own subject terms:
 - **What "cold" forbids:** re-reading *the exemplar under cold*. Nothing else. Reading around the subject, docs, adjacent material and throwaway practice are all fine and encouraged.
 - **The source cap**, and why it exists.
 
-## Step 11 — Write the repo
+## Step 12 — Write the repo
 
 ```
 ~/franklin/<subject-slug>/
@@ -254,13 +358,40 @@ planned_start: null
 curriculum_is_draft: false
 ```
 
-`GATES.md` — one block per rung; **`franklin-drill` reads this before serving any drill**:
+`GATES.md` — an ungated orientation block, then one block per rung; **`franklin-drill` reads this before serving any drill**:
 ```yaml
+orientation:
+  covered: null           # null | YYYY-MM-DD
+  must_cover:
+    - "<what the subject is — the loop/process/form, concretely>"
+    - "<the separable mechanisms it buys>"
+    - "<the honest case against: weak evidence, bad fits, live disputes>"
+    - "<the rungs mapped onto the thing>"
+  held_back: "<the r-exemplar whose argument must NOT be paraphrased, and why>"
+
+rungs:
 - rung: assertions-and-fixtures
   needed: true
-  material:
-    - <what to read/watch/do, with links>
-  time_box: 4 sessions
+  placement:
+    status: pending       # pending | done
+    run_on: null          # YYYY-MM-DD
+    result: null          # zero | partial | solid
+    evidence: ""          # which items were missed, one line
+  material:               # gathered and verified by franklin-drill when the block starts
+    text:
+      - url: <named page, not a site root>
+        note: <what it covers>
+    video:
+      - url: <specific video>
+        segment: <mm:ss-mm:ss>
+        note: <what it covers>
+      # or: none_found: "<why — searched, nothing usable exists>"
+    interactive:
+      - url: <tutorial with exercises, playground, kata, runnable repo>
+    deeper:               # explicitly beyond the gate
+      - url: <chapter, paper, long talk>
+    verified_on: null     # YYYY-MM-DD the links were last checked to resolve
+  time_box: "2-6 sessions, set by placement"
   exit_test:
     explain: "<the thing they must explain unaided>"
     exercise: "<the source's exercises, or a small build task with a runnable result>"
@@ -288,7 +419,7 @@ A queued campaign also gets a **STATUS banner at the top of its README**.
 
 **Pick one home for the repo and say which it is.** Two copies on two machines diverge. If the repo lives on the user's own machine, confirm the tooling the drills will need actually runs there before reporting success.
 
-## Step 12 — Report back, short
+## Step 13 — Report back, short
 
 **Active campaign:** the ladder in order, **what the first acquisition block is and how it will be tested**, the daily time slot, and when the first rebuild actually happens. Do not hand them three exemplars to obtain if the first block is acquisition — they'll need those in week 3, not tonight.
 
@@ -299,6 +430,9 @@ A queued campaign also gets a **STATUS banner at the top of its README**.
 ## Non-negotiables
 
 - **Acquire before you drill.** Reconstruction sharpens craft on material already understood. Running it earlier teaches nothing and reads to the user as the method being broken.
+- **Orient before you acquire.** Mechanics without "what is this and why" produce a learner who executes correctly and cannot say what any of it is for. One ungated session, and it includes the honest case against.
+- **Measure the starting point; never assume it.** Not zero, not competent. A placement quiz per rung, scored against a key, immediately before that rung's block.
+- **Two modalities minimum, links verified live.** Canonical text and a video with a timestamped segment, searched and checked to resolve when the block starts — never recalled from memory, never a bare site root.
 - **Twenty minutes is the real number.** Franklin studied "at night after work, or before it began in the morning, or on Sundays." Design for the seams.
 - **One active campaign.** Two is forty minutes a day and loses both.
 - **The cold delay is the method**, not overhead. Four days minimum.

@@ -1,6 +1,6 @@
 ---
 name: franklin-drill
-description: "Run one session of a Franklin-method campaign — acquire a rung's material and test the gate, prep an exemplar into hints, or diff a blind rebuild against the original. Use for daily practice in an existing ~/franklin campaign."
+description: "Run one session of a Franklin-method campaign — place the learner and acquire a rung's material against its gate, prep an exemplar into hints, or diff a blind rebuild against the original. Use for daily practice in an existing ~/franklin campaign."
 ---
 
 # Franklin — Run a Session
@@ -11,9 +11,11 @@ The daily driver for a campaign created by `franklin`. Twenty minutes. **Three m
 
 | Mode | When | What happens |
 |---|---|---|
-| **Mode 0 — Acquire** | The current rung's gate in `GATES.md` is not passed | Work through the material; run the exit test when the time box is up |
+| **Mode 0 — Acquire** | The current rung's gate in `GATES.md` is not passed | Place, orient, work the material, run the exit test |
 | **Mode A — Prep** | Gate passed, nothing ripe | Compress an exemplar to hints, set the cold delay |
 | **Mode B — Rebuild** | Gate passed, something ripe | Hints only, blind rebuild, diff, log faults |
+
+Mode 0 runs in three phases: **0a placement** (measure where they actually stand, per rung — never assume zero, never assume competence), **0b orientation** (once, before rung 1: what the subject is and why, including the honest case against), **0c acquisition sessions** ending in the exit test.
 
 Modes A and B are **refinement** — they sharpen craft on material already understood. Mode 0 is **acquisition**. Running A or B on unacquired material is asking someone to reconstruct an essay in a language they cannot read: the diff is meaningless, the session is miserable, and the user reasonably concludes the method is broken.
 
@@ -32,12 +34,15 @@ List `~/franklin/*/` and read each `campaign.yml`.
 
 Read `campaign.yml`, `README.md`, `SCHEDULE.md`, **`GATES.md`**, and every `exemplars/*/meta.yml`. Then, in order:
 
-1. **Gate check first.** Find the rung this week's schedule is on. If its `GATES.md` entry has `needed: true` and `passed: null` → **Mode 0**. Nothing else runs until that gate is passed.
-2. Any exemplar `status: cold` with `cold_until` **today or earlier** → **Mode B**. Ripe exemplars go stale.
-3. Otherwise → **Mode A**.
-4. Fewer than 2 exemplars in flight → **Mode A**, even with something queued behind it.
-5. **Ratio guard:** if sources (`r`) are running ahead of artifacts (`e`) — more than a third of recent sessions, or an `r` prepped while an `e` sits unprepped — prep the artifact and say why.
-6. If everything is cold but not ripe, say which ripens first and when, then prep. **Never serve a cold exemplar early**, even if asked.
+1. **Orientation check.** `GATES.md` has an `orientation` block with `covered: null` → **Mode 0b**, before anything else in the campaign. Mechanics with no answer to "what is this and why" lose the user around week 5.
+2. **Gate check.** Find the rung this week's schedule is on. If its `GATES.md` entry has `needed: true` and `passed: null` → **Mode 0**. Nothing else runs until that gate is passed.
+   - That rung's `placement.status: pending` → **Mode 0a** this session. Do not start on material before the starting point is measured.
+   - Older campaign with no `placement` block at all → treat it as pending and add the block as part of the session.
+3. Any exemplar `status: cold` with `cold_until` **today or earlier** → **Mode B**. Ripe exemplars go stale.
+4. Otherwise → **Mode A**.
+5. Fewer than 2 exemplars in flight → **Mode A**, even with something queued behind it.
+6. **Ratio guard:** if sources (`r`) are running ahead of artifacts (`e`) — more than a third of recent sessions, or an `r` prepped while an `e` sits unprepped — prep the artifact and say why.
+7. If everything is cold but not ripe, say which ripens first and when, then prep. **Never serve a cold exemplar early**, even if asked.
 
 **The gate is not advisory.** If the user asks to skip ahead to drilling, say once, in a line, that the diff will be noise without the material — then respect their call if they insist, and record the bypass in that gate's `notes` so the review can see it.
 
@@ -47,14 +52,114 @@ Read `campaign.yml`, `README.md`, `SCHEDULE.md`, **`GATES.md`**, and every `exem
 
 **Open by naming the mode.** "This rung needs its material first — we're acquiring, not drilling, for about four sessions." A user who expects a drill and gets a reading list assumes something went wrong.
 
-1. **Work the material**, in the order `GATES.md` lists it. Claude can explain, answer questions, and work examples alongside them here — this is the one mode where that helps rather than steals the learning.
-2. **Track sessions against the time box.** If the box is spent and the exit test isn't close, say so plainly: either the material is wrong for them, or the rung is too big. Both are findings. Do not silently extend.
-3. **Run the exit test** once the material is covered:
+Mode 0 has three phases, in order: **placement**, then **orientation** (campaign start only), then **acquisition sessions** ending in the exit test.
+
+---
+
+### 0a — Placement, before the first acquisition session of a rung
+
+The rung's `placement.status` is `pending` → this session is placement. It runs
+**per rung, when that rung's block starts** — never once for the whole campaign, and
+never from a self-report.
+
+**Never assume a starting point.** Assuming zero bores an experienced user out of a
+fourteen-week campaign; assuming competence strands a beginner in drills whose diff
+is noise. Both read to the user as the method being broken.
+
+1. **Write the key first.** Before showing the user anything, write down what a
+   correct answer to each question contains. A quiz scored against a key written
+   afterward is scored against the answers received, which measures nothing.
+2. **Ask 5–8 questions, cold, in one batch**, ordered easy → hard, specific to this
+   rung. Good items have a *right answer* the user either has or hasn't got — "what
+   does this code print", "what would you check first when X", "name the difference
+   between A and B". Bad items are "how comfortable are you with X" and anything
+   answerable by vibes.
+   - Include at least one item that a confident non-expert typically gets wrong. The
+     gap between claimed and actual level is the thing being measured.
+   - **No looking anything up. No hints while they answer.** If they ask for one,
+     say why not in a line and wait.
+3. **Score it against the key and say the result plainly**, item by item, without
+   softening. Then classify:
+
+   | Result | Means | What happens |
+   |---|---|---|
+   | **zero** | little or nothing lands | full time box, start from first principles |
+   | **partial** | some items solid, named gaps | box narrowed; material scoped to the gaps, and say which items are being skipped and why |
+   | **solid** | the rung's material is already in hand | **mark the gate passed on the spot**, record the evidence, and go to Mode A |
+
+4. **Record it** in `GATES.md`: `placement.status: done`, `run_on`, `result`,
+   `evidence` naming the missed items in one line. Narrow `time_box` from its range
+   to a number.
+5. **Commit:** `placement: <rung> — <result>`.
+
+A `solid` result is a real outcome, not a failure of the campaign design. Say so and
+move on — the user just saved four sessions, and the evidence is in the file if the
+review wants to argue with it.
+
+---
+
+### 0b — Orientation, once, before rung 1
+
+`GATES.md` has an `orientation` block with `covered: null` → this session is
+orientation, and it comes **before rung 1's placement**.
+
+It is ungated and has no exit test. It covers what the `must_cover` list names: what
+the subject *is*, the separable mechanisms it buys, **the honest case against it**,
+and how the rungs map onto it. A learner who can execute the mechanics but cannot say
+what they are for drops the campaign around week 5, and is right to.
+
+**Respect `held_back`.** If a source exemplar argues for the subject, do not
+paraphrase its argument, its ordering, or the misreadings it names — reconstructing it
+later requires recall, and a summary now converts that into recognition. Orient from
+the field's common ground and **say out loud which text is being held back and why**;
+the user seeing the discipline applied to their own campaign is worth more than the
+paragraph it costs.
+
+Set `covered: <today>`. **Commit:** `acquire: orientation`.
+
+---
+
+### 0c — Acquisition sessions
+
+1. **Work the material**, in the order `GATES.md` lists it, scoped by the placement
+   result. Claude can explain, answer questions, and work examples alongside them
+   here — this is the one mode where that helps rather than steals the learning.
+2. **Teach the mechanism, not the surface.** The test:
+
+   > **If the session's output could have been assembled from the source's table of
+   > contents, it was not acquisition.**
+
+   A list of what exists is a reference sheet; the user can get that from the docs
+   index in less time than the session took. Acquisition explains **how the thing
+   works underneath, why it was built that way, and what goes wrong when it is
+   misunderstood** — with worked examples, and with the failure modes named. Where a
+   mechanism explains a fault-grid row, say which row and why.
+3. **Every session produces a written note** at `acquire/notes/session-NN.md`,
+   committed. Not a summary of what was said — the material itself, at mechanism
+   level, so it is re-readable in week 12 without re-watching anything. It ends with
+   the hands-on for that session and the resources below.
+4. **Every session note carries external resources, in at least two modalities.**
+   People do not all learn the same way, and a session that ships only prose fails
+   the half of users who need to watch someone do it.
+   - **Canonical text** — named pages, never a site root.
+   - **A video with a timestamped segment** — a specific talk, screencast, or
+     demonstration, not a channel or playlist. For anything with tacit motion this is
+     the *primary* resource, not a supplement. If none exists, say so; the absence is
+     information.
+   - **Interactive where it exists** — a playground, kata, or runnable repo.
+   - **One deeper dive, flagged explicitly as beyond the gate**, so curiosity has
+     somewhere to go without inflating the time box.
+
+   **Search for these; never recall them.** Verify each link resolves before writing
+   it down — a dead link destroys confidence in the whole plan — and update
+   `material.verified_on`. Note anything paywalled, borrow-only, or account-gated.
+5. **Track sessions against the time box.** If the box is spent and the exit test isn't close, say so plainly: either the material is wrong for them, or the rung is too big. Both are findings. Do not silently extend. If placement said `zero` and the box was set for `partial`, that is a placement miss — record it, because the review looks for that pattern.
+6. **Run the exit test** once the material is covered:
    - **Explain it unaided.** They write the explanation from memory, sources closed. Claude checks it against the material and **names what is missing or wrong rather than grading it warmly.** Vague means not landed.
    - **Pass the exercises.** The source's own, or the substitute build task. **The result must run, compile, hold water, or otherwise be externally checkable.** If the only available check is Claude's opinion, the exit test is broken — say so and find a real one.
-4. **Record it.** Set `passed: <today>` in `GATES.md`, or leave it null and note what is still missing.
-5. **Commit:** `acquire: <rung> — session N of <box>`, or `gate: <rung> passed`.
-6. **Close by naming what unlocks.** "Gate passed — tomorrow we prep the first exemplar, first rebuild Monday."
+7. **Record it.** Set `passed: <today>` in `GATES.md`, or leave it null and note what is still missing.
+8. **Commit:** `acquire: <rung> — session N of <box>`, or `gate: <rung> passed`.
+9. **Close by naming what unlocks.** "Gate passed — tomorrow we prep the first exemplar, first rebuild Monday."
 
 **Do not let acquisition drift into drilling.** No cold delays, no hints, no fault logging in Mode 0. Different mode, different rules.
 
