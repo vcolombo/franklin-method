@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import difflib
 import json
 import os
 import re
@@ -110,6 +111,13 @@ def is_blank(value) -> bool:
     return value is None or (isinstance(value, str) and not value.strip())
 
 
+def names_slug(text: str, slug: str) -> bool:
+    """True when prose refers to a slug, hyphenated or spelled out."""
+    haystack = re.sub(r"[\s_-]+", " ", text.lower())
+    needle = re.sub(r"[\s_-]+", " ", str(slug).lower().strip())
+    return bool(needle) and needle in haystack
+
+
 def load_yaml_document(path: Path, f: Findings, code: str) -> dict | None:
     """Parse a file that is either plain YAML or Markdown with ```yaml blocks."""
     try:
@@ -183,8 +191,15 @@ def check_campaign_yml(root: Path, f: Findings) -> dict:
         f.warn("C006", "campaign.yml",
                "status is queued but blocked_on is empty — say which campaign it waits on")
 
+    # Extra keys are how a campaign carries its own metadata — a title, a
+    # cadence, the ladder repeated for convenience. Policing them buries the
+    # real findings under a dozen warnings, so only flag what looks like a
+    # misspelling of a key the skills actually read.
     for key in sorted(set(doc) - CAMPAIGN_KEYS):
-        f.warn("C007", "campaign.yml", f"unknown key '{key}'")
+        near = difflib.get_close_matches(key, sorted(CAMPAIGN_KEYS), n=1, cutoff=0.8)
+        if near:
+            f.warn("C007", "campaign.yml",
+                   f"key '{key}' looks like a misspelling of '{near[0]}', which is the one the skills read")
 
     return doc
 
@@ -237,6 +252,11 @@ def check_material(material, where: str, placement_done: bool, today: dt.date, f
             if "none_found" in entry:
                 if is_blank(entry.get("none_found")):
                     f.error("G022", spot, "none_found needs the reason the search came up empty")
+                continue
+            if is_blank(entry.get("url")):
+                # One finding, not two: an entry with no video cannot have a
+                # segment of one.
+                f.error("G023", spot, "resource has no url")
                 continue
             check_url(entry.get("url"), spot, f)
             if is_blank(entry.get("segment")):
@@ -342,10 +362,6 @@ def check_gates(root: Path, today: dt.date, f: Findings) -> list[dict]:
             f.error("G028", where, "duplicate rung name")
         seen.add(name)
 
-        for key in sorted(RUNG_REQUIRED - set(rung)):
-            if key != "placement":  # placement gets its own, louder finding
-                f.error("G007", where, f"missing required key '{key}'")
-
         needed = rung.get("needed")
         if not isinstance(needed, bool):
             f.error("G008", where, f"needed {needed!r} is not a boolean")
@@ -354,11 +370,32 @@ def check_gates(root: Path, today: dt.date, f: Findings) -> list[dict]:
         if passed is not None and as_date(passed) is None:
             f.error("G027", where, f"passed {passed!r} is not null or YYYY-MM-DD")
 
-        placement_done = check_placement(rung.get("placement"), where, passed, f)
+        # A rung written off as not needed usually has no material, no exit test
+        # and no box either. Reporting each of those as its own error buries the
+        # one finding that matters under five that follow from it, so say the one
+        # thing and stop: the gate was skipped without measuring, which is the
+        # call the interview does not get to make.
+        if needed is False:
+            placement = rung.get("placement")
+            placed_solid = (isinstance(placement, dict)
+                            and placement.get("status") == "done"
+                            and placement.get("result") == "solid")
+            if placed_solid:
+                f.warn("G029", where,
+                       "placement came back solid, so record the gate as needed: true with "
+                       "passed: <date> and the evidence — needed: false loses why it was skipped")
+            else:
+                f.error("G029", where,
+                        "needed is false with no placement behind it — skipping a gate is "
+                        "placement's call to make, not the interview's. Set needed: true with "
+                        "placement pending; if the quiz comes back solid the gate passes on the spot")
+            continue
 
-        if needed is False and not placement_done:
-            f.warn("G029", where,
-                   "needed is false — skipping a gate is placement's call to make, not the interview's")
+        for key in sorted(RUNG_REQUIRED - set(rung)):
+            if key != "placement":  # placement gets its own, louder finding
+                f.error("G007", where, f"missing required key '{key}'")
+
+        placement_done = check_placement(rung.get("placement"), where, passed, f)
 
         time_box = rung.get("time_box")
         if is_blank(time_box):
@@ -384,12 +421,27 @@ def check_gates(root: Path, today: dt.date, f: Findings) -> list[dict]:
 # exemplars/*/meta.yml
 # --------------------------------------------------------------------------
 
+def read_text_or_empty(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
 def check_exemplars(root: Path, rungs: list[dict], today: dt.date, f: Findings) -> None:
     exemplars_dir = root / "exemplars"
     if not exemplars_dir.is_dir():
         return
 
     by_sub_skill = {r.get("rung"): r for r in rungs}
+
+    # Not every sub-skill is a gated rung. The judgment rung runs in parallel and
+    # is scored as resolving predictions rather than passed by an exit test, so it
+    # lives in PREDICTIONS.md and CURRICULUM.md and never appears under `rungs`.
+    # An exemplar pointing at one is correct, and calling it a dangling reference
+    # is the checker not knowing the method.
+    parallel_prose = (read_text_or_empty(root / "PREDICTIONS.md")
+                      + "\n" + read_text_or_empty(root / "CURRICULUM.md"))
 
     for entry in sorted(p for p in exemplars_dir.iterdir() if p.is_dir()):
         path = entry / "meta.yml"
@@ -451,7 +503,13 @@ def check_exemplars(root: Path, rungs: list[dict], today: dt.date, f: Findings) 
             continue
         rung = by_sub_skill.get(sub_skill)
         if rung is None:
-            f.error("X001", where, f"sub_skill {sub_skill!r} matches no rung in GATES.md")
+            if names_slug(parallel_prose, sub_skill):
+                # A parallel sub-skill: scored by prediction, with no gate to be
+                # early for. The gate cross-checks below do not apply.
+                continue
+            f.error("X001", where,
+                    f"sub_skill {sub_skill!r} matches no rung in GATES.md, and nothing in "
+                    "PREDICTIONS.md or CURRICULUM.md names it either")
             continue
 
         gate_passed = as_date(rung.get("passed"))
