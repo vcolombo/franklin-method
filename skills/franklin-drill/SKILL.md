@@ -1,6 +1,6 @@
 ---
 name: franklin-drill
-description: "Run one session of a Franklin-method campaign — place the learner and acquire a rung's material against its gate, prep an exemplar into hints, or diff a blind rebuild against the original. Use for daily practice in an existing ~/franklin campaign."
+description: "Run one session of a Franklin-method campaign — place the learner and acquire a rung's material against its gate, prep an exemplar into hints, or diff a blind rebuild against the original. Use for daily practice in an existing Franklin campaign."
 ---
 
 # Franklin — Run a Session
@@ -21,7 +21,9 @@ Modes A and B are **refinement** — they sharpen craft on material already unde
 
 ## Pick the campaign first
 
-List `~/franklin/*/` and read each `campaign.yml`.
+**Campaign home:** `$FRANKLIN_HOME` if that is set, otherwise `~/franklin`. Written `<home>` below.
+
+List `<home>/*/` and read each `campaign.yml`.
 
 - **Subject named** → use it. If `status: queued`, **do not run a session.** Say what it is blocked on and its planned start, and offer the active campaign instead.
 - **No subject named, exactly one `status: active`** → use that one.

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["pyyaml"]
+# ///
 """Check a Franklin-method campaign repo against the schema the skills write.
 
 The skills are prose, and prose gates get talked past. This is the same schema
@@ -6,10 +10,13 @@ as a script: it reads campaign.yml, GATES.md and exemplars/*/meta.yml and says
 where the campaign has drifted from what franklin-drill expects to find.
 
 Usage:
-    scripts/check-campaign.py ~/franklin/tdd
-    scripts/check-campaign.py --all          # every campaign in ~/franklin
+    uv run scripts/check-campaign.py ~/franklin/tdd   # no install needed
+    scripts/check-campaign.py ~/franklin/tdd          # needs PyYAML present
+    scripts/check-campaign.py --all          # every campaign under the home
     scripts/check-campaign.py --strict ...   # warnings count as failures
     scripts/check-campaign.py --json ...
+
+The campaign home defaults to ~/franklin, overridden by $FRANKLIN_HOME or --home.
 
 Exit codes: 0 clean, 1 findings, 2 could not run (bad path, missing PyYAML).
 """
@@ -28,7 +35,13 @@ try:
     import yaml
 except ImportError:  # pragma: no cover - environment problem, not a finding
     sys.stderr.write(
-        "check-campaign needs PyYAML.  pip install pyyaml  (or: pipx run --spec pyyaml ...)\n"
+        "check-campaign needs PyYAML. Either of these works:\n"
+        "\n"
+        "    uv run %s <campaign>        # installs nothing; uv reads this file's header\n"
+        "    python3 -m pip install --user pyyaml\n"
+        "\n"
+        "(PyYAML is a library, not a command, so `pipx run` cannot supply it.)\n"
+        % sys.argv[0]
     )
     sys.exit(2)
 
@@ -510,7 +523,8 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Check a Franklin-method campaign against the schema.")
     parser.add_argument("paths", nargs="*", help="campaign directories")
     parser.add_argument("--all", action="store_true", help="check every campaign under --home")
-    parser.add_argument("--home", default="~/franklin", help="campaign home (default: ~/franklin)")
+    parser.add_argument("--home", default=os.environ.get("FRANKLIN_HOME", "~/franklin"),
+                        help="campaign home (default: $FRANKLIN_HOME, else ~/franklin)")
     parser.add_argument("--strict", action="store_true", help="treat warnings as failures")
     parser.add_argument("--json", action="store_true", help="machine-readable report")
     parser.add_argument("--today", help="override today's date, YYYY-MM-DD (for tests)")

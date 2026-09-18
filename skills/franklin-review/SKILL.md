@@ -11,12 +11,47 @@ The drills generate data. This is where the data changes the plan. Without it th
 
 ## Orient
 
-List `~/franklin/*/` and read each `campaign.yml` to pick the campaign: the named subject, or the single `status: active` one. If several are active, ask. **Never review a queued campaign** — it has no data; say what it is blocked on instead.
+**Campaign home:** `$FRANKLIN_HOME` if that is set, otherwise `~/franklin`. Written `<home>` below.
+
+List `<home>/*/` and read each `campaign.yml` to pick the campaign: the named subject, or the single `status: active` one. If several are active, ask. **Never review a queued campaign** — it has no data; say what it is blocked on instead.
 
 Then read `FAULTS.md`, `SCHEDULE.md`, `CURRICULUM.md`, `PREDICTIONS.md` if present, every `rebuilds/*/diff-*.md` since the last review, and `git log --oneline` for the period. Decide which review this is:
 
 - **Weekly** (default) — 45 minutes, adjusts next week.
 - **Cycle** (week 13, or whenever the ladder is finished) — closes this campaign and starts the next.
+
+---
+
+## Step 0 — Check the campaign against the schema
+
+Before the tally. The rules the campaign is supposed to follow are prose spread
+across four skills, and prose rules get talked past — a gate passed on a self-report,
+an exemplar ripening behind a gate that is still shut, links nobody re-checked. Those
+are cheap to detect and expensive to find late, so detect them first:
+
+```bash
+"$CLAUDE_PLUGIN_ROOT/scripts/check-campaign.py" <home>/<subject>
+```
+
+If PyYAML is missing it exits 2 and says so; `uv run` in front of the path supplies
+it. If the script is not there at all — the skills were copied in by hand rather than
+installed as a plugin — say so in one line and review without it. **A missing checker
+is not a clean campaign**, and reporting it as one is the failure this step exists to
+prevent.
+
+Read the findings as inputs to the review, not as a verdict:
+
+- **Errors** are schema breaks. Fix what is a recording error (a `time_box` left as a
+  range, a `verified_on` never filled in) as part of this review. A gate passed while
+  placement is still `pending` (`G016`) is not a recording error — it is a rung whose
+  starting point was never measured, and it belongs in the findings below.
+- **Warnings** are usually calendar drift. An exemplar ripening behind a shut gate
+  (`X003`) is a scheduling decision to make now: re-date it, or accept the staleness
+  deliberately and say why. Leaving it to next week is how it becomes `X004`.
+
+The checker reads structure, not substance. It cannot tell whether a quiz was any
+good or whether the campaign is teaching anyone anything — that is the rest of this
+review.
 
 ---
 

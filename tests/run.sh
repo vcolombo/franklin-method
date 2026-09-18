@@ -64,6 +64,25 @@ else
   bad "--json should emit a parseable report"
 fi
 
+# --- a missing PyYAML must exit 2 with usable advice, not a traceback ---------
+stub="$(mktemp -d)"
+printf 'raise ImportError("simulated: PyYAML not installed")\n' > "$stub/yaml.py"
+dep_out=$(PYTHONPATH="$stub" python3 "$checker" "$here/fixtures/good" --today "$today" 2>&1)
+dep_status=$?
+rm -rf "$stub"
+if [ "$dep_status" -eq 2 ]; then
+  ok "a missing PyYAML exits 2, not 0 or 1"
+else
+  bad "a missing PyYAML should exit 2, got $dep_status"
+  note "$dep_out"
+fi
+if grep -q "uv run" <<<"$dep_out" && ! grep -q "pipx run --spec" <<<"$dep_out"; then
+  ok "the dependency message points somewhere that works"
+else
+  bad "the dependency message should name a command that can actually supply PyYAML"
+  note "$dep_out"
+fi
+
 if [ "$fails" -eq 0 ]; then
   printf '\nall checks passed\n'
 else
