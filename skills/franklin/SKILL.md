@@ -171,17 +171,9 @@ made in week 1 about where the user will stand in week 10 is worthless: they wil
 have spent nine weeks in the subject by then. What this step does is *declare that
 placement is required* and leave the box unsized until it runs.
 
-So write into the rung's `GATES.md` block:
-
-```yaml
-  placement:
-    status: pending        # pending | done
-    run_on: null           # YYYY-MM-DD, filled by franklin-drill
-    result: null           # zero | partial | solid — filled by franklin-drill
-    evidence: ""           # which quiz items were missed, in one line
-```
-
-and set `time_box` as a **range** — `"2–6 sessions, set by placement"` — rather than
+So write the rung's `placement` block with `status: pending` and `run_on`, `result`
+and `evidence` left empty for `franklin-drill` to fill — the full shape is in
+[reference.md](reference.md) — and set `time_box` as a **range** — `"2–6 sessions, set by placement"` — rather than
 a fixed number. `franklin-drill` narrows it when placement runs.
 
 **The box includes the placement session.** Placement costs a real twenty minutes, so
@@ -353,71 +345,10 @@ Write into the generated `README.md`, in the user's own subject terms:
   reviews/           # week-NN.md
 ```
 
-`campaign.yml`:
-```yaml
-subject: test-driven-development
-status: active            # active | queued | complete | abandoned
-aim: <the observable aim, one line>
-week_1: 2026-09-21
-blocked_on: null
-planned_start: null
-curriculum_is_draft: false
-```
-
-`GATES.md` — an ungated orientation block, then one block per rung; **`franklin-drill` reads this before serving any drill**:
-```yaml
-orientation:
-  covered: null           # null | YYYY-MM-DD
-  must_cover:
-    - "<what the subject is — the loop/process/form, concretely>"
-    - "<the separable mechanisms it buys>"
-    - "<the honest case against: weak evidence, bad fits, live disputes>"
-    - "<the rungs mapped onto the thing>"
-  held_back: "<the r-exemplar whose argument must NOT be paraphrased, and why>"
-
-rungs:
-- rung: assertions-and-fixtures
-  needed: true
-  placement:
-    status: pending       # pending | done
-    run_on: null          # YYYY-MM-DD
-    result: null          # zero | partial | solid
-    evidence: ""          # which items were missed, one line
-  material:               # gathered and verified by franklin-drill when the block starts
-    text:
-      - url: <named page, not a site root>
-        note: <what it covers>
-    video:
-      - url: <specific video>
-        segment: <mm:ss-mm:ss>
-        note: <what it covers>
-      # or: none_found: "<why — searched, nothing usable exists>"
-    interactive:
-      - url: <tutorial with exercises, playground, kata, runnable repo>
-    deeper:               # explicitly beyond the gate
-      - url: <chapter, paper, long talk>
-    verified_on: null     # YYYY-MM-DD the links were last checked to resolve
-  time_box: "2-6 sessions, set by placement"
-  exit_test:
-    explain: "<the thing they must explain unaided>"
-    exercise: "<the source's exercises, or a small build task with a runnable result>"
-  passed: null            # null | YYYY-MM-DD
-  notes: ""
-```
-
-`meta.yml` per exemplar:
-```yaml
-id: e01
-kind: artifact              # artifact | reading | video
-sub_skill: coil-tension
-drill: reconstruction
-source: <where it came from>
-url: <if applicable>
-segment: <timestamps, page or chapter range — for sources>
-prepped: null
-cold_until: null
-status: awaiting-material   # awaiting-material | ready-to-prep | cold | rebuilt | diffed
-```
+The three machine-read files — `campaign.yml`, `GATES.md` and each exemplar's
+`meta.yml` — are specified in **[reference.md](reference.md)**. Read it before
+writing them; it is the one prose source for their shape, and `check-campaign.py`
+enforces the same rules in code.
 
 A queued campaign also gets a **STATUS banner at the top of its README**.
 

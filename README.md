@@ -173,8 +173,10 @@ there: two copies on two machines diverge, and the git log stops being trustwort
 .claude-plugin/
   plugin.json          # plugin manifest
   marketplace.json     # marketplace manifest — source "./" (plugin is the repo root)
+CHANGELOG.md           # what changed between released versions
 skills/
   franklin/SKILL.md
+  franklin/reference.md  # the campaign file schemas, loaded on demand
   franklin-drill/SKILL.md
   franklin-review/SKILL.md
   franklin-history/SKILL.md
@@ -182,10 +184,17 @@ scripts/
   check-campaign.py    # the campaign schema, as a script
 tests/
   run.sh               # fixture suite for the checker
-  fixtures/{good,bad}/ # one campaign that follows the schema, one that breaks it
+  schema_drift.py      # fails when reference.md and the checker disagree
+  fixtures/            # campaigns that follow the schema, and that break it
 .github/workflows/
   validate.yml         # manifests + skills + the fixture suite, on every push
 ```
+
+The schema has two forms that have to stay in step: `skills/franklin/reference.md`
+tells Claude what to write, and `scripts/check-campaign.py` decides whether what got
+written is valid. `tests/schema_drift.py` compares them — keys and enums, both
+directions — so a rule added to one and not the other fails the suite rather than
+producing a campaign that satisfies the skill and fails the checker.
 
 Validate before publishing a change:
 

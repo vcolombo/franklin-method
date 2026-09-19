@@ -23,6 +23,10 @@ Modes A and B are **refinement** — they sharpen craft on material already unde
 
 **Campaign home:** `$FRANKLIN_HOME` if that is set, otherwise `~/franklin`. Written `<home>` below.
 
+**The files you write back into** — `GATES.md` and each exemplar's `meta.yml` — are
+specified in [../franklin/reference.md](../franklin/reference.md). Read it before
+editing either by hand.
+
 List `<home>/*/` and read each `campaign.yml`.
 
 - **Subject named** → use it. If `status: queued`, **do not run a session.** Say what it is blocked on and its planned start, and offer the active campaign instead.

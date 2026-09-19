@@ -225,6 +225,24 @@ else
   note "$unbraced"
 fi
 
+# --- the prose schema and the checker must describe the same thing -----------
+if drift_out=$(python3 "$repo/tests/schema_drift.py" 2>&1); then
+  ok "reference.md and check-campaign.py agree"
+else
+  bad "the prose schema and the checker have drifted"
+  note "$drift_out"
+fi
+
+# --- the shipped version must be in the changelog ----------------------------
+# A changelog nobody updates is worse than none: it reads as authoritative and
+# is quietly wrong.
+shipped=$(python3 -c 'import json;print(json.load(open("'"$repo"'/.claude-plugin/plugin.json"))["version"])')
+if grep -q "^## $shipped " "$repo/CHANGELOG.md"; then
+  ok "CHANGELOG.md has an entry for $shipped"
+else
+  bad "CHANGELOG.md has no '## $shipped' entry for the shipped version"
+fi
+
 if [ "$fails" -eq 0 ]; then
   printf '\nall checks passed\n'
 else
