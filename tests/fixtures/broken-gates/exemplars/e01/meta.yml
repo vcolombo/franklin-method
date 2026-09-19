@@ -1,0 +1,10 @@
+id: e01
+kind: artifact
+sub_skill: coil-tension
+drill: reconstruction
+source: a plate
+url: https://example.org/plate
+segment: null
+prepped: null
+cold_until: null
+status: awaiting-material

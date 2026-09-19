@@ -30,14 +30,24 @@ an exemplar ripening behind a gate that is still shut, links nobody re-checked. 
 are cheap to detect and expensive to find late, so detect them first:
 
 ```bash
-"$CLAUDE_PLUGIN_ROOT/scripts/check-campaign.py" <home>/<subject>
+"${CLAUDE_PLUGIN_ROOT}/scripts/check-campaign.py" <home>/<subject>
 ```
 
+**The braces are load-bearing.** Claude Code substitutes the real path into skill
+content only for the exact token `${CLAUDE_PLUGIN_ROOT}`, and the variable is *not*
+in the environment of Bash-tool commands. Written unbraced it expands to nothing,
+the command becomes `/scripts/check-campaign.py`, and this step silently falls
+through to the fallback below on every review.
+
 If PyYAML is missing it exits 2 and says so; `uv run` in front of the path supplies
-it. If the script is not there at all — the skills were copied in by hand rather than
-installed as a plugin — say so in one line and review without it. **A missing checker
-is not a clean campaign**, and reporting it as one is the failure this step exists to
-prevent.
+it.
+
+If the path did not get substituted — it still reads as a placeholder, or resolves to
+a bare `/scripts/...` — then the skills were copied in by hand rather than installed
+as a plugin. Look for the script next to the skills (`../../scripts/`) before giving
+up. Only then say, in one line, that the checker was not found and this review ran
+without it. **A missing checker is not a clean campaign**, and reporting it as one is
+the failure this step exists to prevent.
 
 Read the findings as inputs to the review, not as a verdict:
 

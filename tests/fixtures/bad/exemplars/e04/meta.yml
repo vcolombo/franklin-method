@@ -1,0 +1,10 @@
+id: e04
+kind: artifact
+sub_skill: silence-handling
+drill: reconstruction
+source: a recorded pause
+url: https://example.org/transcripts/silence
+segment: null
+prepped: 2026-09-10
+cold_until: 2026-09-16
+status: cold

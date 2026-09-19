@@ -61,4 +61,27 @@ rungs:
     exercise: "splice mid-wall and load the basket to failure; the splice must not be the failure"
   passed: null
   notes: ""
+
+- rung: rim-lock
+  needed: true
+  placement:
+    status: pending
+    run_on: null
+    result: null
+    evidence: ""
+  material:
+    text:
+      - url: https://example.org/weaving/rim-lock
+        note: closing the wall without a stitched rim
+    video:
+      url: https://example.org/watch/rim-lock
+      segment: 00:40-06:15
+      note: a lone mapping, not a one-item list
+    verified_on: null
+  time_box: "2-5 sessions, set by placement"
+  exit_test:
+    explain: "why a locked rim holds where a stitched one splits"
+    exercise: "close a wall and hang the basket from its rim under load"
+  passed: null
+  notes: ""
 ```
