@@ -15,6 +15,7 @@ Usage:
     scripts/check-campaign.py --all          # every campaign under the home
     scripts/check-campaign.py --strict ...   # warnings count as failures
     scripts/check-campaign.py --json ...
+    scripts/check-campaign.py --no-vcs-check ...   # before git init
 
 The campaign home defaults to ~/franklin, overridden by $FRANKLIN_HOME or --home.
 
@@ -138,11 +139,13 @@ def load_yaml_document(path: Path, f: Findings, code: str) -> dict | None:
 
     merged: dict = {}
     parsed_any = False
+    reported = False
     for source in sources:
         try:
             doc = yaml.safe_load(source)
         except yaml.YAMLError as exc:
             f.error(code, path.name, f"YAML will not parse: {str(exc).splitlines()[0]}")
+            reported = True
             continue
         if doc is None:
             continue
@@ -156,7 +159,10 @@ def load_yaml_document(path: Path, f: Findings, code: str) -> dict | None:
                 merged[key] = value
 
     if not parsed_any:
-        f.error(code, path.name, "no YAML mapping found (expected the blocks franklin writes)")
+        # The parse error above already said why; "no mapping found" is that same
+        # fault restated.
+        if not reported:
+            f.error(code, path.name, "no YAML mapping found (expected the blocks franklin writes)")
         return None
     return merged
 
@@ -236,12 +242,15 @@ def check_url(url, where: str, f: Findings) -> None:
         f.warn("G023", where, f"url {text!r} is a bare site root — name the page")
 
 
-def check_material(material, where: str, placement_done: bool, today: dt.date, f: Findings) -> None:
+def check_material(material, where: str, placement_done: bool, gate_passed, today: dt.date,
+                   f: Findings) -> None:
     if not isinstance(material, dict):
         f.error("G020", where, "material block missing or not a mapping")
         return
 
     text = material.get("text")
+    if isinstance(text, dict):
+        text = [text]
     if not isinstance(text, list) or not text:
         f.error("G020", where, "material.text is empty — no canonical text for this rung")
     else:
@@ -252,7 +261,10 @@ def check_material(material, where: str, placement_done: bool, today: dt.date, f
                 f.error("G020", f"{where} material.text[{i}]", "entry is not a mapping with a url")
 
     video = material.get("video")
-    if isinstance(video, dict) and "none_found" in video:
+    if isinstance(video, dict):
+        # A single resource written as a mapping rather than a one-item list is
+        # unambiguous. Calling it "empty" points at the wrong fix — the finding
+        # belongs to whatever the entry is actually missing.
         video = [video]
     if not isinstance(video, list) or not video:
         f.error("G021", where,
@@ -286,14 +298,17 @@ def check_material(material, where: str, placement_done: bool, today: dt.date, f
 
     verified = material.get("verified_on")
     if verified is None:
-        if placement_done:
+        if placement_done and gate_passed is None:
             f.warn("G024", where,
                    "material.verified_on is null but the block has started — links are recalled, not checked")
     else:
         verified_date = as_date(verified)
         if verified_date is None:
             f.error("G024", where, f"material.verified_on {verified!r} is not YYYY-MM-DD")
-        elif (today - verified_date).days > STALE_LINKS_DAYS:
+        elif gate_passed is None and (today - verified_date).days > STALE_LINKS_DAYS:
+            # Only while the block is still ahead. Telling someone to re-check
+            # links "before the block runs" on a gate they passed in week 2 is
+            # noise that never goes away.
             f.warn("G025", where,
                    f"links last verified {(today - verified_date).days} days ago "
                    f"(over {STALE_LINKS_DAYS}) — re-check before the block runs")
@@ -339,15 +354,18 @@ def check_placement(placement, where: str, rung_passed, f: Findings) -> bool:
     return True
 
 
-def check_gates(root: Path, today: dt.date, f: Findings) -> list[dict]:
+def check_gates(root: Path, today: dt.date, f: Findings) -> tuple[list[dict], bool]:
+    """Returns (rungs, ladder_known). ladder_known is False when GATES.md could
+    not be read far enough to know what the rungs are — in which case the
+    exemplar cross-checks have nothing to compare against and must stay quiet."""
     path = root / "GATES.md"
     if not path.exists():
         f.error("G001", "GATES.md", "missing — franklin-drill reads this before serving any drill")
-        return []
+        return [], False
 
     doc = load_yaml_document(path, f, "G002")
     if doc is None:
-        return []
+        return [], False
 
     orientation = doc.get("orientation")
     if not isinstance(orientation, dict):
@@ -363,7 +381,7 @@ def check_gates(root: Path, today: dt.date, f: Findings) -> list[dict]:
     rungs = doc.get("rungs")
     if not isinstance(rungs, list) or not rungs:
         f.error("G006", "GATES.md", "no rungs")
-        return []
+        return [], False
 
     seen: set[str] = set()
     for index, rung in enumerate(rungs):
@@ -371,7 +389,17 @@ def check_gates(root: Path, today: dt.date, f: Findings) -> list[dict]:
             f.error("G007", f"GATES.md rungs[{index}]", "rung is not a mapping")
             continue
 
-        name = rung.get("rung") or f"rungs[{index}]"
+        raw_name = rung.get("rung")
+        if raw_name is None:
+            name = f"rungs[{index}]"
+        elif isinstance(raw_name, str) and raw_name.strip():
+            name = raw_name
+        else:
+            # A list or a number here is unhashable or unprintable downstream, and
+            # the file's contract is to report rather than traceback.
+            f.error("G007", f"GATES.md rungs[{index}]",
+                    f"rung name {raw_name!r} is not a name — the ladder is keyed by it")
+            name = f"rungs[{index}]"
         where = f"GATES.md {name}"
         if name in seen:
             f.error("G028", where, "duplicate rung name")
@@ -430,7 +458,7 @@ def check_gates(root: Path, today: dt.date, f: Findings) -> list[dict]:
             f.warn("G017", where,
                    f"time_box {time_box!r} is still a range after placement ran — narrow it to a number")
 
-        check_material(rung.get("material"), where, placement_done, today, f)
+        check_material(rung.get("material"), where, placement_done, as_date(passed), today, f)
 
         exit_test = rung.get("exit_test")
         if not isinstance(exit_test, dict):
@@ -440,7 +468,7 @@ def check_gates(root: Path, today: dt.date, f: Findings) -> list[dict]:
                 if is_blank(exit_test.get(key)):
                     f.error("G026", where, f"exit_test.{key} is empty")
 
-    return [r for r in rungs if isinstance(r, dict)]
+    return [r for r in rungs if isinstance(r, dict)], True
 
 
 # --------------------------------------------------------------------------
@@ -454,12 +482,13 @@ def read_text_or_empty(path: Path) -> str:
         return ""
 
 
-def check_exemplars(root: Path, rungs: list[dict], today: dt.date, f: Findings) -> None:
+def check_exemplars(root: Path, rungs: list[dict], ladder_known: bool, today: dt.date,
+                    f: Findings) -> None:
     exemplars_dir = root / "exemplars"
     if not exemplars_dir.is_dir():
         return
 
-    by_sub_skill = {r.get("rung"): r for r in rungs}
+    by_sub_skill = {r.get("rung"): r for r in rungs if isinstance(r.get("rung"), str)}
 
     # Not every sub-skill is a gated rung. The judgment rung runs in parallel and
     # is scored as resolving predictions rather than passed by an exit test, so it
@@ -496,8 +525,10 @@ def check_exemplars(root: Path, rungs: list[dict], today: dt.date, f: Findings) 
             f.error("M005", where, f"status {status!r} is not one of {sorted(EXEMPLAR_STATUS)}")
 
         sub_skill = meta.get("sub_skill")
-        if is_blank(sub_skill):
-            f.error("M009", where, "no sub_skill — nothing ties this exemplar to a rung")
+        if is_blank(sub_skill) or not isinstance(sub_skill, str):
+            f.error("M009", where,
+                    "no sub_skill naming a rung — nothing ties this exemplar to the ladder")
+            sub_skill = None
 
         prepped = meta.get("prepped")
         cold_until = meta.get("cold_until")
@@ -525,7 +556,11 @@ def check_exemplars(root: Path, rungs: list[dict], today: dt.date, f: Findings) 
                 f.warn("M008", where, f"status is {status} but rebuilds/{entry.name}/ is empty")
 
         # ---- cross-checks against the ladder -------------------------------
-        if is_blank(sub_skill):
+        if sub_skill is None:
+            continue
+        if not ladder_known:
+            # GATES.md is missing or unreadable. Every exemplar would report as a
+            # dangling reference, which is one real fault restated once per file.
             continue
         rung = by_sub_skill.get(sub_skill)
         if rung is None:
@@ -545,7 +580,9 @@ def check_exemplars(root: Path, rungs: list[dict], today: dt.date, f: Findings) 
                     f"prepped on {prepped_date} but the '{sub_skill}' gate has not passed — "
                     "prep requires understanding the material first")
 
-        if cold_date and gate_passed is None:
+        if cold_date and gate_passed is None and rung.get("needed") is True:
+            # Same guard X002 carries: where the rung needs no gate, there is no
+            # gate for the exemplar to be waiting on.
             if cold_date <= today:
                 f.error("X004", where,
                         f"ripe since {cold_date} while the '{sub_skill}' gate is still shut — "
@@ -560,9 +597,23 @@ def check_exemplars(root: Path, rungs: list[dict], today: dt.date, f: Findings) 
 # repo shape
 # --------------------------------------------------------------------------
 
-def check_layout(root: Path, rungs: list[dict], f: Findings) -> None:
-    if not any((parent / ".git").exists() for parent in [root, *root.resolve().parents]):
-        f.warn("R001", ".", "not under git — franklin-history reads the log as its source of truth")
+def check_layout(root: Path, rungs: list[dict], check_vcs: bool, f: Findings) -> None:
+    if check_vcs:
+        resolved = root.resolve()
+        if not ((resolved / ".git").exists() or (resolved.parent / ".git").exists()):
+            # Walking every ancestor was too generous: a campaign under a
+            # git-tracked home directory looked tracked, and franklin-history
+            # would then mine the dotfiles repo's log as this campaign's record
+            # of sessions.
+            owner = next((a for a in resolved.parents if (a / ".git").exists()), None)
+            if owner is None:
+                f.warn("R001", ".",
+                       "not under git — franklin-history reads the log as its source of truth")
+            else:
+                f.warn("R001", ".",
+                       f"the nearest git repo is {owner}, which is neither this campaign nor its "
+                       "home — franklin-history would read that repo's log as this campaign's "
+                       "session record. Run git init here")
 
     for name in ("README.md", "CURRICULUM.md", "SCHEDULE.md", "FAULTS.md"):
         if not (root / name).exists():
@@ -577,13 +628,17 @@ def check_layout(root: Path, rungs: list[dict], f: Findings) -> None:
 
 # --------------------------------------------------------------------------
 
-def check_campaign(root: Path, today: dt.date) -> Findings:
+def check_campaign(root: Path, today: dt.date, check_vcs: bool = True) -> Findings:
     f = Findings()
     check_campaign_yml(root, f)
-    rungs = check_gates(root, today, f)
-    check_exemplars(root, rungs, today, f)
-    check_layout(root, rungs, f)
+    rungs, ladder_known = check_gates(root, today, f)
+    check_exemplars(root, rungs, ladder_known, today, f)
+    check_layout(root, rungs, check_vcs, f)
     return f
+
+
+def looks_like_a_campaign(path: Path) -> bool:
+    return (path / "campaign.yml").exists() or (path / "GATES.md").exists()
 
 
 def discover(args) -> list[Path]:
@@ -592,7 +647,14 @@ def discover(args) -> list[Path]:
         if not home.is_dir():
             sys.stderr.write(f"no campaign home at {home}\n")
             sys.exit(2)
-        return sorted(p for p in home.iterdir() if p.is_dir() and not p.name.startswith("."))
+        # Not every directory under the home is a campaign. franklin-history
+        # writes its reports to <home>/history/, and reporting that folder as a
+        # campaign missing every file it was never going to have makes --all
+        # exit 1 forever, however clean the real campaigns are. A path named
+        # explicitly is still checked in full — there the user asserted it is a
+        # campaign, and a missing campaign.yml is the finding.
+        return sorted(p for p in home.iterdir()
+                      if p.is_dir() and not p.name.startswith(".") and looks_like_a_campaign(p))
     roots = []
     for raw in args.paths:
         path = Path(raw).expanduser()
@@ -612,6 +674,8 @@ def main(argv=None) -> int:
     parser.add_argument("--strict", action="store_true", help="treat warnings as failures")
     parser.add_argument("--json", action="store_true", help="machine-readable report")
     parser.add_argument("--today", help="override today's date, YYYY-MM-DD (for tests)")
+    parser.add_argument("--no-vcs-check", action="store_true",
+                        help="skip the git check, for a campaign not yet git init'ed")
     args = parser.parse_args(argv)
 
     if not args.paths and not args.all:
@@ -632,7 +696,7 @@ def main(argv=None) -> int:
     report = []
     failed = False
     for root in roots:
-        f = check_campaign(root, today)
+        f = check_campaign(root, today, check_vcs=not args.no_vcs_check)
         report.append({
             "campaign": str(root),
             "errors": f.errors,

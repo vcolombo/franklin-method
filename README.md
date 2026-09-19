@@ -229,7 +229,13 @@ Otherwise `python3 -m pip install --user pyyaml` once. (PyYAML is a library with
 entry point, so `pipx run` cannot supply it.)
 
 `--all` looks in `~/franklin` unless `$FRANKLIN_HOME` or `--home` says otherwise —
-the same home the skills use.
+the same home the skills use. It treats a directory as a campaign only if it holds a
+`campaign.yml` or a `GATES.md`, so `franklin-history`'s `history/` folder is passed
+over rather than reported as a campaign missing everything. A path you name
+explicitly is always checked in full: there you have asserted it is a campaign, and a
+missing `campaign.yml` is the finding.
+
+`--no-vcs-check` skips the git check, for a campaign you have not `git init`ed yet.
 
 `franklin-review` runs this as its step 0, so Sunday's review opens with the schema
 findings rather than depending on someone remembering to look.
@@ -247,6 +253,7 @@ The findings it exists for:
 | `M007` | a cold delay under four days |
 | `X002` | an exemplar prepped before its rung's gate opened |
 | `X003` `X004` | an exemplar that ripens — or has already ripened — while its gate is still shut, and is going stale where it sits |
+| `R001` | a campaign whose nearest git repo is neither itself nor its home — `franklin-history` would mine that repo's log instead |
 
 Run it before a Sunday review, and after any hand-edit of a campaign file. It is a
 schema check, not a judgement: it will not tell you whether the campaign is teaching

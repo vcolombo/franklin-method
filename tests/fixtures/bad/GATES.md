@@ -58,3 +58,7 @@ rungs:
     result: solid
     evidence: ""
   notes: "quiz ran, nobody wrote down what it showed"
+
+- rung: [a, b]
+  needed: false
+  notes: "a ladder cannot be keyed by a list"
