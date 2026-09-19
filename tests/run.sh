@@ -143,6 +143,18 @@ else
   note "$dep_out"
 fi
 
+# --- the plugin-root placeholder only substitutes when braced -----------------
+# Claude Code rewrites `${CLAUDE_PLUGIN_ROOT}` in skill content and does not put the
+# variable in the Bash tool's environment, so an unbraced `$CLAUDE_PLUGIN_ROOT`
+# expands to nothing and the command silently runs against `/scripts/...`.
+unbraced=$(grep -rn '\$CLAUDE_PLUGIN_ROOT' "$repo/skills" || true)
+if [ -z "$unbraced" ]; then
+  ok "every CLAUDE_PLUGIN_ROOT in skills/ is braced"
+else
+  bad "unbraced \$CLAUDE_PLUGIN_ROOT will not be substituted — use \${CLAUDE_PLUGIN_ROOT}"
+  note "$unbraced"
+fi
+
 if [ "$fails" -eq 0 ]; then
   printf '\nall checks passed\n'
 else

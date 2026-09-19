@@ -1,6 +1,6 @@
 {
   "name": "franklin-method",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Turns any subject into a self-teaching campaign using Benjamin Franklin's two modes: acquisition, then reconstruct-and-diff refinement. Every check is external - Claude never grades the work.",
   "author": {
     "name": "Vincent Colombo",
