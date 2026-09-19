@@ -112,10 +112,17 @@ def is_blank(value) -> bool:
 
 
 def names_slug(text: str, slug: str) -> bool:
-    """True when prose refers to a slug, hyphenated or spelled out."""
-    haystack = re.sub(r"[\s_-]+", " ", text.lower())
+    """True when prose refers to a slug, hyphenated or spelled out.
+
+    Whole-word only. A bare substring test lets an unknown sub-skill named
+    `read` pass because the prose happens to say `readiness`, which silently
+    suppresses the finding this exists to make.
+    """
     needle = re.sub(r"[\s_-]+", " ", str(slug).lower().strip())
-    return bool(needle) and needle in haystack
+    if not needle:
+        return False
+    haystack = re.sub(r"[\s_-]+", " ", text.lower())
+    return re.search(rf"(?<!\w){re.escape(needle)}(?!\w)", haystack) is not None
 
 
 def load_yaml_document(path: Path, f: Findings, code: str) -> dict | None:
@@ -195,7 +202,15 @@ def check_campaign_yml(root: Path, f: Findings) -> dict:
     # cadence, the ladder repeated for convenience. Policing them buries the
     # real findings under a dozen warnings, so only flag what looks like a
     # misspelling of a key the skills actually read.
-    for key in sorted(set(doc) - CAMPAIGN_KEYS):
+    #
+    # YAML does not require keys to be strings, and a file with `13: weeks` in
+    # it is a campaign to report on, not a traceback: sorting a mixed-type set
+    # raises, and get_close_matches only takes strings.
+    extra = set(doc) - CAMPAIGN_KEYS
+    for key in sorted(repr(k) for k in extra if not isinstance(k, str)):
+        f.error("C008", "campaign.yml",
+                f"key {key} is not a string — the skills read this file by name")
+    for key in sorted(k for k in extra if isinstance(k, str)):
         near = difflib.get_close_matches(key, sorted(CAMPAIGN_KEYS), n=1, cutoff=0.8)
         if near:
             f.warn("C007", "campaign.yml",
@@ -377,17 +392,28 @@ def check_gates(root: Path, today: dt.date, f: Findings) -> list[dict]:
         # call the interview does not get to make.
         if needed is False:
             placement = rung.get("placement")
-            placed_solid = (isinstance(placement, dict)
-                            and placement.get("status") == "done"
-                            and placement.get("result") == "solid")
-            if placed_solid:
+            result = None
+            if isinstance(placement, dict):
+                # Collapsing the dependent fields is not a reason to stop reading
+                # the placement itself. A quiz recorded with no evidence or an
+                # unparseable run_on is its own finding, and swallowing it here
+                # would hide exactly the recording this checker exists to catch.
+                check_placement(placement, where, passed, f)
+                if placement.get("status") == "done":
+                    result = placement.get("result")
+
+            if result == "solid":
                 f.warn("G029", where,
                        "placement came back solid, so record the gate as needed: true with "
                        "passed: <date> and the evidence — needed: false loses why it was skipped")
+            elif result in ("zero", "partial"):
+                f.error("G029", where,
+                        f"placement came back {result} — the quiz says this rung is needed, "
+                        "and needed: false overrides the measurement with an opinion")
             else:
                 f.error("G029", where,
-                        "needed is false with no placement behind it — skipping a gate is "
-                        "placement's call to make, not the interview's. Set needed: true with "
+                        "needed is false with no completed placement behind it — skipping a gate "
+                        "is placement's call to make, not the interview's. Set needed: true with "
                         "placement pending; if the quiz comes back solid the gate passes on the spot")
             continue
 

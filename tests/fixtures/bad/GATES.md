@@ -49,3 +49,12 @@ rungs:
 - rung: walk-away-power
   needed: false
   notes: "user reckoned they had this one covered"
+
+- rung: silence-handling
+  needed: false
+  placement:
+    status: done
+    run_on: 2026-09-18
+    result: solid
+    evidence: ""
+  notes: "quiz ran, nobody wrote down what it showed"

@@ -86,6 +86,32 @@ else
   bad "a urlless video entry should report once, got $urlless findings"
 fi
 
+# --- a placement that ran is read, even where the gate was skipped -----------
+# Collapsing a skipped rung's dependent fields must not swallow the recording
+# error in the placement itself.
+if grep -q "G014  GATES.md silence-handling" <<<"$out"; then
+  ok "a skipped rung's placement is still validated"
+else
+  bad "a needed:false rung with an unevidenced placement should still report G014"
+  note "$(grep "silence-handling" <<<"$out")"
+fi
+
+# --- a sub-skill matches as a whole word, not as a substring ----------------
+# 'read' must not pass as the parallel 'reed-readiness' just because the prose
+# says 'readiness'.
+if grep -q "X001  exemplars/r02" <<<"$out"; then
+  ok "a sub-skill that only appears as a substring still reports X001"
+else
+  bad "sub_skill 'read' should not match 'reed-readiness' in the prose"
+fi
+
+# --- a non-string YAML key is a finding, not a traceback --------------------
+if grep -q "C008" <<<"$out"; then
+  ok "a non-string campaign.yml key is reported"
+else
+  bad "a non-string campaign.yml key should report C008, not crash"
+fi
+
 # --- extra keys are the campaign's business; misspellings are not ------------
 if grep -q "C007" <<<"$out" && grep -q "weak_1" <<<"$out"; then
   ok "a misspelled campaign.yml key is caught"
