@@ -110,8 +110,9 @@ status: awaiting-material   # awaiting-material | ready-to-prep | cold | rebuilt
 ```
 
 - **`id` must match the directory name.**
-- **`sub_skill` names a rung in `GATES.md`,** or a parallel judgment sub-skill scored
-  in `PREDICTIONS.md` — the judgment rung has no gate and never appears under `rungs`.
+- **`sub_skill` names a rung in `GATES.md`,** or a parallel judgment sub-skill named
+  in `PREDICTIONS.md` or `CURRICULUM.md` — the judgment rung is scored by prediction,
+  has no gate, and never appears under `rungs`.
 - **`cold_until` is at least four days after `prepped`.** Rebuilding from fresh
   memory is transcription.
 - **Nothing is prepped before its rung's gate has passed.** Compressing an exemplar

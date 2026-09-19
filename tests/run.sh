@@ -168,7 +168,7 @@ else
 fi
 
 # --- hostile values are findings, not tracebacks -----------------------------
-if grep -q "is not a name" <<<"$out"; then
+if grep -q "G007  GATES.md rungs\[" <<<"$out" && grep -q "is not a name" <<<"$out"; then
   ok "an unhashable rung name is reported, not raised"
 else
   bad "a non-string rung name should report G007"
@@ -189,15 +189,29 @@ else
 fi
 
 # --- the git check names the repo that would be mined, not any ancestor ------
-# These fixtures sit inside the plugin repo, which is exactly the shape the
-# check exists to catch: franklin-history would read that repo's log instead.
-vcs_out=$(python3 "$checker" "$here/fixtures/good" --today "$today" 2>&1)
+# Built here rather than read off the ambient checkout: asserting against
+# "these fixtures happen to live inside a git repo" passes or fails on how the
+# tree was obtained, and says nothing about the rule.
+vcs_probe=$(mktemp -d)
+git -C "$vcs_probe" init -q
+mkdir -p "$vcs_probe/nested"
+cp -R "$here/fixtures/good" "$vcs_probe/nested/tdd"
+vcs_out=$(python3 "$checker" "$vcs_probe/nested/tdd" --today "$today" 2>&1)
 if grep -q "R001" <<<"$vcs_out" && grep -q "neither this campaign nor its home" <<<"$vcs_out"; then
   ok "a campaign tracked by a distant repo reports R001"
 else
   bad "R001 should fire when the nearest repo is neither the campaign nor its home"
   note "$vcs_out"
 fi
+# …and stops once the campaign is its own repo.
+git -C "$vcs_probe/nested/tdd" init -q
+if own_out=$(python3 "$checker" "$vcs_probe/nested/tdd" --today "$today" --strict 2>&1); then
+  ok "a campaign that is its own repo does not report R001"
+else
+  bad "R001 should not fire once the campaign is a git repo"
+  note "$own_out"
+fi
+rm -rf "$vcs_probe"
 
 # --- --all discovers campaigns, not every folder under the home --------------
 # franklin-history writes <home>/history/, which is not a campaign and must not
@@ -237,7 +251,7 @@ fi
 # A changelog nobody updates is worse than none: it reads as authoritative and
 # is quietly wrong.
 shipped=$(python3 -c 'import json;print(json.load(open("'"$repo"'/.claude-plugin/plugin.json"))["version"])')
-if grep -q "^## $shipped " "$repo/CHANGELOG.md"; then
+if grep -q "^## ${shipped//./\\.} " "$repo/CHANGELOG.md"; then
   ok "CHANGELOG.md has an entry for $shipped"
 else
   bad "CHANGELOG.md has no '## $shipped' entry for the shipped version"
