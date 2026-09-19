@@ -26,7 +26,9 @@ So every rung gets **acquisition first, gated by an exit test, then drills.** Ac
 
 ## Step 0 — Start, resume, or queue?
 
-List `~/franklin/*/` and read each `campaign.yml`.
+**Campaign home:** `$FRANKLIN_HOME` if that is set, otherwise `~/franklin`. Written `<home>` below.
+
+List `<home>/*/` and read each `campaign.yml`.
 
 - **This subject already exists** → a resume, not a start. Read its `README.md` and hand off to `franklin-drill` or `franklin-review`. Do not re-run the interview.
 - **Another campaign is `status: active`** → this one is **queued**, not started. See below.
@@ -338,7 +340,7 @@ Write into the generated `README.md`, in the user's own subject terms:
 ## Step 12 — Write the repo
 
 ```
-~/franklin/<subject-slug>/
+<home>/<subject-slug>/
   campaign.yml       # status, aim, dates — the machine-readable header
   README.md          # aim, ladder, two modes, pipeline, source cap, how to resume
   CURRICULUM.md      # per rung: acquisition gate, exit test, drill form, answer key
@@ -421,7 +423,7 @@ A queued campaign also gets a **STATUS banner at the top of its README**.
 
 `git init`, commit as `franklin: start <subject>` (or `franklin: queue <subject>`). One commit per session from here on — `git log` is the record, and `franklin-history` reads it as its source of truth.
 
-**Pick one home for the repo and say which it is.** Two copies on two machines diverge. If the repo lives on the user's own machine, confirm the tooling the drills will need actually runs there before reporting success.
+**Pick one home for the repo and say which it is** — and if it is not `~/franklin`, say that `$FRANKLIN_HOME` needs to be set for the other skills to find it. Two copies on two machines diverge. If the repo lives on the user's own machine, confirm the tooling the drills will need actually runs there before reporting success.
 
 ## Step 13 — Report back, short
 

@@ -36,6 +36,8 @@ rungs:
     video:
       - url: https://example.org/watch/concessions
         note: no segment given
+      - segment: 02:00-09:00
+        note: url never filled in
     verified_on: null
   time_box: "2-6 sessions, set by placement"
   exit_test:
@@ -43,3 +45,16 @@ rungs:
     exercise: "run a scripted round and score the pattern against the transcript"
   passed: null
   notes: ""
+
+- rung: walk-away-power
+  needed: false
+  notes: "user reckoned they had this one covered"
+
+- rung: silence-handling
+  needed: false
+  placement:
+    status: done
+    run_on: 2026-09-18
+    result: solid
+    evidence: ""
+  notes: "quiz ran, nobody wrote down what it showed"

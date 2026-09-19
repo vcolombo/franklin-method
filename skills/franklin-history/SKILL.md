@@ -1,6 +1,6 @@
 ---
 name: franklin-history
-description: "Analyze every Franklin-method campaign in ~/franklin at once — mine the git logs, gates and fault grids for faults that recur across unrelated subjects, whether placement and acquisition are calibrated for this person, which drill forms actually work, and whether the cold delay is being honored. Use after two or more campaigns."
+description: "Analyze every Franklin-method campaign at once — mine the git logs, gates and fault grids for faults that recur across unrelated subjects, whether placement and acquisition are calibrated for this person, which drill forms actually work, and whether the cold delay is being honored. Use after two or more campaigns."
 ---
 
 # Franklin — Cross-Campaign History
@@ -13,7 +13,9 @@ The question it answers is different in kind: *not* "what do I keep getting wron
 
 ## Read-only, always
 
-This skill **never writes to a campaign repo**. It reads. Output goes to `~/franklin/history/<date>.md`. If `~/franklin/history/` is itself a git repo, commit there; otherwise just write the file. Campaign history is evidence — corrupting it to make a tidier report destroys the only asset here.
+**Campaign home:** `$FRANKLIN_HOME` if that is set, otherwise `~/franklin`. Written `<home>` below.
+
+This skill **never writes to a campaign repo**. It reads. Output goes to `<home>/history/<date>.md`. If `<home>/history/` is itself a git repo, commit there; otherwise just write the file. Campaign history is evidence — corrupting it to make a tidier report destroys the only asset here.
 
 ## Check the data first
 
@@ -42,7 +44,7 @@ block. **Campaigns predating these forms have `acquire:` commits at best and no
 `placement:` at all** — treat those rungs as unmeasured rather than as well-placed, and
 say how many of them there are before drawing any conclusion from section 2.
 
-So, across every `~/franklin/*/`:
+So, across every `<home>/*/`:
 
 ```bash
 git -C "$d" log --pretty=format:'%ad|%H|%s' --date=format:'%Y-%m-%d %H:%M'
@@ -146,7 +148,7 @@ At most one — fault rate over time, campaigns overlaid. If producing it, load 
 
 ## Output
 
-`~/franklin/history/<date>.md`:
+`<home>/history/<date>.md`:
 
 1. **n** — campaigns, cycles, sessions, span. First line, every time.
 2. **Trait-level faults** — the cross-subject recurrences, in plain language.

@@ -1,0 +1,10 @@
+id: r02
+kind: reading
+sub_skill: read
+drill: reconstruction
+source: a chapter whose sub_skill was mistyped
+url: https://example.org/book/ch9
+segment: pp. 90-99
+prepped: null
+cold_until: null
+status: awaiting-material

@@ -62,7 +62,7 @@ Links are searched and checked to resolve when the block starts, never recalled.
 |---|---|---|
 | **`franklin`** | Once per subject | Interviews the goal, decomposes it into independently-failing sub-skills, assigns each a real answer key, writes an orientation block and a placement-sized acquisition gate per rung, orders the ladder easiest-first, and writes a git repo |
 | **`franklin-drill`** | Daily, 20 min | Three modes: **acquire** (place the learner, orient, work the material, pass the exit test), **prep** (compress an exemplar to hints, set the cold delay), **rebuild** (hints only, blind reconstruction, then the diff) |
-| **`franklin-review`** | Weekly + at cycle end | Tallies the fault grid, finds recurring losses, checks study-to-drill balance and prediction hit rate, revises the rows, and hands off to the next queued campaign |
+| **`franklin-review`** | Weekly + at cycle end | Checks the campaign against the schema, tallies the fault grid, finds recurring losses, checks study-to-drill balance and prediction hit rate, revises the rows, and hands off to the next queued campaign |
 | **`franklin-history`** | After 2+ campaigns | Mines the git logs across every campaign for faults that recur across *unrelated* subjects — those are facts about the learner, not the subject |
 
 They chain:
@@ -163,7 +163,9 @@ Then start a campaign:
 /franklin I want to learn underwater basket weaving
 ```
 
-The campaign repo defaults to `~/franklin/<subject>/`. Pick one home and stay there — two copies on two machines diverge, and the git log stops being trustworthy.
+The campaign repo defaults to `~/franklin/<subject>/`. Set `$FRANKLIN_HOME` to keep
+them somewhere else — all four skills and the checker read it. Pick one home and stay
+there: two copies on two machines diverge, and the git log stops being trustworthy.
 
 ### Repo layout
 
@@ -207,14 +209,30 @@ input placement exists to refuse. So the schema is also a script:
 
 ```bash
 scripts/check-campaign.py ~/franklin/tdd     # one campaign
-scripts/check-campaign.py --all              # everything in ~/franklin
+scripts/check-campaign.py --all              # every campaign under the home
 scripts/check-campaign.py --all --strict     # warnings count as failures
 scripts/check-campaign.py ~/franklin/tdd --json
 ```
 
 It reads `campaign.yml`, `GATES.md` and every `exemplars/*/meta.yml`, and reports
 where the campaign has drifted from what `franklin-drill` expects to find. Exit 0
-clean, 1 findings, 2 couldn't run. Needs PyYAML.
+clean, 1 findings, 2 couldn't run.
+
+It needs PyYAML. The file carries a [PEP 723](https://peps.python.org/pep-0723/)
+header, so `uv` supplies it without installing anything:
+
+```bash
+uv run scripts/check-campaign.py ~/franklin/tdd
+```
+
+Otherwise `python3 -m pip install --user pyyaml` once. (PyYAML is a library with no
+entry point, so `pipx run` cannot supply it.)
+
+`--all` looks in `~/franklin` unless `$FRANKLIN_HOME` or `--home` says otherwise —
+the same home the skills use.
+
+`franklin-review` runs this as its step 0, so Sunday's review opens with the schema
+findings rather than depending on someone remembering to look.
 
 The findings it exists for:
 

@@ -14,6 +14,9 @@ ok()   { printf 'ok   %s\n' "$*"; }
 bad()  { printf 'FAIL %s\n' "$*"; fails=$((fails + 1)); }
 
 # --- the good fixture must come back clean, warnings included ----------------
+# It carries benign extra keys in campaign.yml and an exemplar whose sub-skill is
+# the parallel judgment rung — scored by prediction, with no gate in GATES.md.
+# Neither is a fault, and neither may produce a finding.
 if out=$(python3 "$checker" "$here/fixtures/good" --today "$today" --strict 2>&1); then
   ok "good fixture passes --strict"
 else
@@ -62,6 +65,82 @@ if python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["campaigns"][0]
   ok "--json emits a parseable report"
 else
   bad "--json should emit a parseable report"
+fi
+
+# --- one finding per fault, not a cascade ------------------------------------
+# A rung written off as not needed has no material, box or exit test either.
+# Each of those reported separately buries the finding that matters.
+skipped=$(grep -c "walk-away-power" <<<"$out")
+if [ "$skipped" -eq 1 ]; then
+  ok "a needed:false rung reports once, not six times"
+else
+  bad "a needed:false rung should report once, got $skipped findings"
+  note "$(grep "walk-away-power" <<<"$out")"
+fi
+
+# An entry with no video cannot also be faulted for having no segment of one.
+urlless=$(grep -c 'material.video\[1\]' <<<"$out")
+if [ "$urlless" -eq 1 ]; then
+  ok "a video entry with no url reports once, not twice"
+else
+  bad "a urlless video entry should report once, got $urlless findings"
+fi
+
+# --- a placement that ran is read, even where the gate was skipped -----------
+# Collapsing a skipped rung's dependent fields must not swallow the recording
+# error in the placement itself.
+if grep -q "G014  GATES.md silence-handling" <<<"$out"; then
+  ok "a skipped rung's placement is still validated"
+else
+  bad "a needed:false rung with an unevidenced placement should still report G014"
+  note "$(grep "silence-handling" <<<"$out")"
+fi
+
+# --- a sub-skill matches as a whole word, not as a substring ----------------
+# 'read' must not pass as the parallel 'reed-readiness' just because the prose
+# says 'readiness'.
+if grep -q "X001  exemplars/r02" <<<"$out"; then
+  ok "a sub-skill that only appears as a substring still reports X001"
+else
+  bad "sub_skill 'read' should not match 'reed-readiness' in the prose"
+fi
+
+# --- a non-string YAML key is a finding, not a traceback --------------------
+if grep -q "C008" <<<"$out"; then
+  ok "a non-string campaign.yml key is reported"
+else
+  bad "a non-string campaign.yml key should report C008, not crash"
+fi
+
+# --- extra keys are the campaign's business; misspellings are not ------------
+if grep -q "C007" <<<"$out" && grep -q "weak_1" <<<"$out"; then
+  ok "a misspelled campaign.yml key is caught"
+else
+  bad "C007 should catch 'weak_1' as a misspelling of 'week_1'"
+fi
+if grep -q "unknown key 'notes'" <<<"$out"; then
+  bad "an extra campaign.yml key should not be reported at all"
+else
+  ok "an extra campaign.yml key is left alone"
+fi
+
+# --- a missing PyYAML must exit 2 with usable advice, not a traceback ---------
+stub="$(mktemp -d)"
+printf 'raise ImportError("simulated: PyYAML not installed")\n' > "$stub/yaml.py"
+dep_out=$(PYTHONPATH="$stub" python3 "$checker" "$here/fixtures/good" --today "$today" 2>&1)
+dep_status=$?
+rm -rf "$stub"
+if [ "$dep_status" -eq 2 ]; then
+  ok "a missing PyYAML exits 2, not 0 or 1"
+else
+  bad "a missing PyYAML should exit 2, got $dep_status"
+  note "$dep_out"
+fi
+if grep -q "uv run" <<<"$dep_out" && ! grep -q "pipx run --spec" <<<"$dep_out"; then
+  ok "the dependency message points somewhere that works"
+else
+  bad "the dependency message should name a command that can actually supply PyYAML"
+  note "$dep_out"
 fi
 
 if [ "$fails" -eq 0 ]; then
